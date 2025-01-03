@@ -1,0 +1,42 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    // Add namespace here
+    namespace 'com.example.flutter_vnb_ios'  // Replace with your app's package name
+
+    ndkVersion "28.0.12674087"  // Ensure this matches the NDK version in your setup
+
+    compileSdkVersion 34  // Make sure compileSdkVersion is specified
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    defaultConfig {
+        applicationId = "com.example.flutter_vnb_ios"  // Make sure this matches the namespace
+        minSdkVersion 21
+        targetSdkVersion 34
+
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
