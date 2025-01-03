@@ -8,7 +8,6 @@ import 'package:flutter_vnb_ios/api_service.dart';
 import 'preferences.dart';
 import 'package:intl/intl.dart';
 import 'them_khach_hang.dart';
-import 'login_screen.dart';
 
 class TonKhoScreen extends StatefulWidget {
   const TonKhoScreen({super.key});

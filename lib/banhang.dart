@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_vnb_ios/ton_kho.dart';
-import 'login_screen.dart';
 import 'package:flutter_vnb_ios/api_service.dart';
 import 'preferences.dart';
 import 'functions.dart';
