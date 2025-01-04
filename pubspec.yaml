@@ -52,6 +52,7 @@ dependencies:
   print_bluetooth_thermal: ^1.1.4
   flutter_esc_pos_utils: ^1.0.1
   url_launcher: ^6.3.1
+  font_awesome_flutter: ^10.8.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -81,6 +82,8 @@ flutter:
   assets:
     - assets/icon_vnb.png
     - assets/beep.mp3
+    - assets/badminton.png
+    - assets/pickle.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

@@ -75,8 +75,8 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
     setState(() {
       _searchQuery = query.toLowerCase();
       _filteredCommunities = _communities.where((community) {
-        final title = community['title']!.toLowerCase();
-        final location = community['location']!.toLowerCase();
+        final title = community['title']?.toLowerCase() ?? '';
+        final location = community['location']?.toLowerCase() ?? '';
         return title.contains(_searchQuery) || location.contains(_searchQuery);
       }).toList();
     });
@@ -114,64 +114,59 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: _filteredCommunities.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Không tìm thấy kết quả',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _filteredCommunities.length,
-                      itemBuilder: (context, index) {
-                        final community = _filteredCommunities[index];
-                        return _buildCommunityCard(
-                          title: community['title']!,
-                          location: community['location']!,
-                          details: community['details'],
-                          distance: community['distance']!,
-                        );
-                      },
-                    ),
-            ),
-            Expanded(
               child: ListView.builder(
-                itemCount: _communities.length,
-                itemBuilder: (context, index) {
-                  final community = _communities[index];
-                  final isSelected = _selectedCommunityIndex == index;
-                  return GestureDetector(
-                    onTap: () => _onCommunitySelected(index),
-                    child: Card(
-                      color: isSelected ? Colors.blue.shade50 : Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              community['title']!,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.blue : Colors.black,
+                  itemCount: _filteredCommunities.length,
+                  itemBuilder: (context, index) {
+                    final community = _filteredCommunities[index];
+                    final isSelected = _selectedCommunityIndex == index;
+                    return GestureDetector(
+                      onTap: () => _onCommunitySelected(index),
+                      child: Card(
+                        color: isSelected ? Colors.blue.shade50 : Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                community['title'] ?? 'Không có tiêu đề',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      isSelected ? Colors.blue : Colors.black,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              community['location']!,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isSelected ? Colors.blue : Colors.grey,
+                              const SizedBox(height: 4),
+                              Text(
+                                community['location'] ?? 'Không có vị trí',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSelected ? Colors.blue : Colors.grey,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                community['details'] ?? 'Không có chi tiết',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSelected ? Colors.blue : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                community['distance'] ?? 'Không có khoảng cách',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSelected ? Colors.blue : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  }),
             ),
             if (_selectedCommunityIndex != null)
               Align(
