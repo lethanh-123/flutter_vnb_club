@@ -84,6 +84,19 @@ flutter:
     - assets/beep.mp3
     - assets/badminton.png
     - assets/pickle.png
+    - assets/nba_players.webp
+    - assets/coach.webp
+    - assets/pic.jpg
+    - assets/pickcelball1.jpg
+    - assets/p2.jpg
+    - assets/p3.jpg
+    - assets/logo_pic.jpg
+    - assets/coach_pic.webp
+    - assets/coach_2.jpg
+    - assets/dink.png
+    - assets/jat_logo.png
+    - assets/auco_logo.png
+    - assets/sunrise_logo.jpg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

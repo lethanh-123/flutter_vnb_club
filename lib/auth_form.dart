@@ -80,19 +80,6 @@ class _AuthFormState extends State<AuthForm> {
       'password': password,
     });
     if (response != null && response['success'] == true) {
-      // showDialog(
-      //   context: context,
-      //   builder: (context) => AlertDialog(
-      //     title: const Text("Thành công"),
-      //     content: const Text("Đăng ký thành công. Vui lòng đăng nhập."),
-      //     actions: [
-      //       TextButton(
-      //         onPressed: () => Navigator.pop(context),
-      //         child: const Text("OK"),
-      //       ),
-      //     ],
-      //   ),
-      // );
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const TermsAndPolicyScreen()),
