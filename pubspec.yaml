@@ -97,6 +97,9 @@ flutter:
     - assets/jat_logo.png
     - assets/auco_logo.png
     - assets/sunrise_logo.jpg
+    - assets/ava.png
+    - assets/match.jpg
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

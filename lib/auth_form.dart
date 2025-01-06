@@ -4,7 +4,7 @@ import 'package:flutter_vnb_ios/api_service.dart';
 import 'preferences.dart';
 import 'dart:convert';
 import 'dieu_khoan_dich_vu.dart';
-
+import 'home_screen.dart';
 class AuthForm extends StatefulWidget {
   final bool isLoginMode;
 
@@ -57,8 +57,10 @@ class _AuthFormState extends State<AuthForm> {
     });
     debugPrint("responsefsdf " + response.toString());
     if (response != null && response['success'] == true) {
-      // await Preferences.saveUserInfo(response);
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
     } else {
       showErrorDialog(response?['error'] ?? "Thông tin đăng nhập không đúng.");
     }
