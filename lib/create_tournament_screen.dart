@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'tournament_format_screen.dart';
+import 'location_list_screen.dart';
 
 class CreateTournamentScreen extends StatefulWidget {
   const CreateTournamentScreen({Key? key}) : super(key: key);
@@ -13,6 +14,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   final TextEditingController _tournamentNameController =
       TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  bool _locationSelected = false;
+  bool _startDateSelected = false;
+  bool _registrationDeadlineSelected = false;
+  String? _selectedLocation;
+  DateTime? _startDate;
+  DateTime? _registrationDeadline;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +49,57 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         ],
       ),
     );
+  }
+
+  // Phương thức chọn địa điểm
+  Future<void> _selectLocation() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LocationListScreen(), // Tạo screen này sau
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedLocation = result;
+        _locationSelected = true;
+      });
+    }
+  }
+
+  // Phương thức chọn ngày bắt đầu
+  Future<void> _selectStartDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _startDate = picked;
+        _startDateSelected = true;
+      });
+    }
+  }
+
+  // Phương thức chọn hạn đăng ký
+  Future<void> _selectRegistrationDeadline() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: _startDate ?? DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _registrationDeadline = picked;
+        _registrationDeadlineSelected = true;
+      });
+    }
   }
 
   Widget _buildSportsSection() {
@@ -84,14 +142,20 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         _buildSettingItem(
           icon: Icons.location_on,
           title: 'Chọn địa điểm',
+          trailing: Text(_selectedLocation ?? ''),
           showArrow: true,
+          onTap: _selectLocation,
         ),
         _buildSettingItem(
           icon: Icons.calendar_today,
           title: 'Thời gian dự kiến bắt đầu giải',
+          trailing: Text(_startDate != null
+              ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year}'
+              : ''),
           subtitle:
               'Bạn có thể bắt đầu giải ngay khi có đủ người chơi hoặc đợi chờ.',
           showArrow: true,
+          onTap: _selectStartDate,
         ),
       ],
     );
@@ -112,8 +176,59 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         _buildRegistrationItem('R', 'Mở đăng ký', 'T2 6 Tháng 17:00', 'sửa'),
         _buildRegistrationItem(
             'E', 'Hạn đăng ký sớm', '(không bắt buộc)', 'thêm'),
-        _buildRegistrationItem('C', 'Hạn chót đăng ký', '', 'thêm'),
+        _buildRegistrationItem(
+          'C',
+          'Hạn chót đăng ký',
+          _registrationDeadline != null
+              ? '${_registrationDeadline!.day}/${_registrationDeadline!.month}/${_registrationDeadline!.year}'
+              : '',
+          _registrationDeadlineSelected ? 'sửa' : 'thêm',
+          onTap: _selectRegistrationDeadline,
+        ),
         _buildRegistrationItem('D', 'Thời lượng', '', 'thêm'),
+      ],
+    );
+  }
+
+  // Cập nhật lại _buildRegistrationItem để thêm onTap
+  Widget _buildRegistrationItem(
+    String letter,
+    String title,
+    String subtitle,
+    String action, {
+    VoidCallback? onTap,
+  }) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 15,
+          backgroundColor: Colors.grey[300],
+          child: Text(letter),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title),
+              if (subtitle.isNotEmpty)
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        TextButton(
+          onPressed: onTap,
+          child: Text(
+            action,
+            style: const TextStyle(color: Colors.blue),
+          ),
+        ),
       ],
     );
   }
@@ -225,53 +340,13 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     );
   }
 
-  Widget _buildRegistrationItem(
-    String letter,
-    String title,
-    String subtitle,
-    String action,
-  ) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 15,
-          backgroundColor: Colors.grey[300],
-          child: Text(letter),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title),
-              if (subtitle.isNotEmpty)
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: Text(
-            action,
-            style: const TextStyle(color: Colors.blue),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildSettingItem({
     required IconData icon,
     required String title,
     String? subtitle,
     Widget? trailing,
     bool showArrow = false,
+    VoidCallback? onTap,
   }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -288,6 +363,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           ],
         ],
       ),
+      onTap: onTap,
     );
   }
 
