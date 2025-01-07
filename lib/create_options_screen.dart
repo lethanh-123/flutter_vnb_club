@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'create_match_screen.dart';
 import 'create_tournament_screen.dart';
+import 'community_search_screen.dart';
 
 class CreateOptionsScreen extends StatelessWidget {
   const CreateOptionsScreen({Key? key}) : super(key: key);
@@ -105,7 +106,12 @@ class CreateOptionsScreen extends StatelessWidget {
               description:
                   'Tập hợp tất cả các thành viên hoặc bạn bè của bạn ở cùng một nơi. Chia sẻ hình ảnh, trò chuyện và tổ chức các hoạt động thường xuyên.',
               onTap: () {
-                // TODO: Navigate to create club screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CommunitySearchScreen(),
+                  ),
+                );
               },
             ),
           ],
