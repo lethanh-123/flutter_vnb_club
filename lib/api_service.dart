@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = "http://vnbapp.zapto.org";
+  static const String baseUrl = "http://192.168.1.251";
 
   static Future<Map<String, dynamic>?> callApi(
       String endpoint, Map<String, dynamic> body) async {
     final url = Uri.parse('$baseUrl/$endpoint');
-
+    print('Calling API: $url');
     final headers = {
       'Content-Type': 'application/json',
     };
@@ -18,11 +18,13 @@ class ApiService {
         headers: headers,
         body: json.encode(body),
       );
-
+      print(
+          'API Response [${response.statusCode}]: ${response.body}'); // Log response
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
       } else {
-        print('API Error [$endpoint]: ${response.statusCode} - ${response.body}');
+        print(
+            'API Error [$endpoint]: ${response.statusCode} - ${response.body}');
         return {
           'error': 'Có lỗi xảy ra',
           'status': response.statusCode,
