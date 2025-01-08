@@ -62,7 +62,7 @@ class StatisticsScreen extends StatelessWidget {
                 _buildMatchHistoryItem(
                   context,
                   date: '23/11',
-                  clubLogo: 'assets/pooc_logo.png',
+                  clubLogo: 'assets/pic.png',
                   title:
                       'Round Robin [DUPR Lv 2.75-3.5] Pick Hub Mix POOC (sân 9-10)',
                   participants: '9 người chơi • 8 trận đấu đã chơi',
@@ -191,7 +191,7 @@ class StatisticsScreen extends StatelessWidget {
               title:
                   "🏆 ROUND ROBIN [DUPR LV 2.75-3.5] PICK HUB MIX POOC (SÂN 9-10)",
               teamName: "Pooc @Pick Hub Social Club",
-              teamLogo: "assets/pooc_logo.png",
+              teamLogo: "assets/pic.png",
               subtitle: "Liên hệ BTC",
               location: "PooC Cầu Lông & PickleBall",
               fullAddress:

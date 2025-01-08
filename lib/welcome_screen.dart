@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'auth_sreen.dart';
 import 'package:flutter/material.dart';
 import 'auth_form.dart';
-
+import 'home_screen.dart';
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
 
@@ -48,7 +48,8 @@ class WelcomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AuthScreen()),
+                  // MaterialPageRoute(builder: (context) => const AuthScreen()),
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
                 );
               },
               child: const Text(
