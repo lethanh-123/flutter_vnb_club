@@ -104,137 +104,137 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     );
   }
 
- Widget _buildMatchesTab() {
-  return SingleChildScrollView(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header info
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            '2 Sân • 9 người chơi • 9 lượt',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[700],
+  Widget _buildMatchesTab() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header info
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              '2 Sân • 9 người chơi • 9 lượt',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[700],
+              ),
             ),
           ),
-        ),
 
-        // Filter buttons
+          // Filter buttons
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _buildFilterButton('Xếp hạng', isRankingView, () {
+                  setState(() {
+                    isRankingView = true;
+                  });
+                }),
+                const SizedBox(width: 8),
+                _buildFilterButton('Trận đấu', !isRankingView, () {
+                  setState(() {
+                    isRankingView = false;
+                  });
+                }),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Show different content based on selected view
+          if (isRankingView) _buildRankingView() else _buildMatchesView(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatchesView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Round 1
+        _buildRound('Vòng 1', [
+          MatchInfo(
+            court: 'Sân 9',
+            score: '11-7',
+            team1: TeamInfo(
+              player1: PlayerInfo('Thanh Tâm', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Man Phan', 'assets/pickball_player.webp'),
+            ),
+            team2: TeamInfo(
+              player1:
+                  PlayerInfo('Dương Quố...', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Khánh Duy', 'assets/pickball_player.webp'),
+              isGrayed: true,
+            ),
+          ),
+          MatchInfo(
+            court: 'Sân 10',
+            score: '1-11',
+            team1: TeamInfo(
+              player1: PlayerInfo('Vivian', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Canary', 'assets/pickball_player.webp'),
+            ),
+            team2: TeamInfo(
+              player1:
+                  PlayerInfo('Huỳnh Trun...', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Ngọc Minh', 'assets/pickball_player.webp'),
+            ),
+          ),
+        ]),
+
+        // BYES section
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _buildFilterButton('Xếp hạng', isRankingView, () {
-                setState(() {
-                  isRankingView = true;
-                });
-              }),
+              Text(
+                'BYES',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(width: 8),
-              _buildFilterButton('Trận đấu', !isRankingView, () {
-                setState(() {
-                  isRankingView = false;
-                });
-              }),
+              const Text('Hữu Thuận VNB'),
             ],
           ),
         ),
 
-        const SizedBox(height: 16),
-
-        // Show different content based on selected view
-        if (isRankingView)
-          _buildRankingView()
-        else
-          _buildMatchesView(),
-      ],
-    ),
-  );
-}
-
-Widget _buildMatchesView() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Round 1
-      _buildRound('Vòng 1', [
-        MatchInfo(
-          court: 'Sân 9',
-          score: '11-7',
-          team1: TeamInfo(
-            player1: PlayerInfo('Thanh Tâm', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Man Phan', 'assets/pickball_player.webp'),
-          ),
-          team2: TeamInfo(
-            player1: PlayerInfo('Dương Quố...', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Khánh Duy', 'assets/pickball_player.webp'),
-            isGrayed: true,
-          ),
-        ),
-        MatchInfo(
-          court: 'Sân 10',
-          score: '1-11',
-          team1: TeamInfo(
-            player1: PlayerInfo('Vivian', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Canary', 'assets/pickball_player.webp'),
-          ),
-          team2: TeamInfo(
-            player1: PlayerInfo('Huỳnh Trun...', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Ngọc Minh', 'assets/pickball_player.webp'),
-          ),
-        ),
-      ]),
-
-      // BYES section
-      Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Text(
-              'BYES',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontWeight: FontWeight.bold,
-              ),
+        // Round 2
+        _buildRound('Vòng 2', [
+          MatchInfo(
+            court: 'Sân 9',
+            score: '11-1',
+            team1: TeamInfo(
+              player1: PlayerInfo('Khánh Duy', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Ngọc Minh', 'assets/pickball_player.webp'),
             ),
-            const SizedBox(width: 8),
-            const Text('Hữu Thuận VNB'),
-          ],
-        ),
-      ),
+            team2: TeamInfo(
+              player1: PlayerInfo('Huỳnh Trung', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Man Phan', 'assets/pickball_player.webp'),
+              isGrayed: true,
+            ),
+          ),
+          MatchInfo(
+            court: 'Sân 10',
+            score: '1-11',
+            team1: TeamInfo(
+              player1: PlayerInfo('Dương Quốc', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Canary', 'assets/pickball_player.webp'),
+            ),
+            team2: TeamInfo(
+              player1: PlayerInfo('Hữu Thuận', 'assets/pickball_player.webp'),
+              player2: PlayerInfo('Thanh Tâm', 'assets/pickball_player.webp'),
+            ),
+          ),
+        ]),
+      ],
+    );
+  }
 
-      // Round 2
-      _buildRound('Vòng 2', [
-        MatchInfo(
-          court: 'Sân 9',
-          score: '11-1',
-          team1: TeamInfo(
-            player1: PlayerInfo('Khánh Duy', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Ngọc Minh', 'assets/pickball_player.webp'),
-          ),
-          team2: TeamInfo(
-            player1: PlayerInfo('Huỳnh Trung', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Man Phan', 'assets/pickball_player.webp'),
-            isGrayed: true,
-          ),
-        ),
-        MatchInfo(
-          court: 'Sân 10',
-          score: '1-11',
-          team1: TeamInfo(
-            player1: PlayerInfo('Dương Quốc', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Canary', 'assets/pickball_player.webp'),
-          ),
-          team2: TeamInfo(
-            player1: PlayerInfo('Hữu Thuận', 'assets/pickball_player.webp'),
-            player2: PlayerInfo('Thanh Tâm', 'assets/pickball_player.webp'),
-          ),
-        ),
-      ]),
-    ],
-  );
-}
   Widget _buildRankingView() {
     return Column(
       children: [
@@ -612,9 +612,9 @@ Widget _buildMatchesView() {
                   fontSize: 16,
                 ),
               ),
-              Row(
+              const Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'RECLUB - Huu Thuan VNB - 23/11 - 🏆 Round Robin [DUPR Lv 2.75-3.5] Pick Hub Mix POOC (san 9-10)',
                       style: const TextStyle(
@@ -622,19 +622,6 @@ Widget _buildMatchesView() {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Clipboard.setData(const ClipboardData(
-                        text:
-                            'RECLUB - Huu Thuan VNB - 23/11 - 🏆 Round Robin [DUPR Lv 2.75-3.5] Pick Hub Mix POOC (san 9-10)',
-                      ));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Đã sao chép nội dung chuyển khoản')),
-                      );
-                    },
-                    child: const Text('Sao chép'),
                   ),
                 ],
               ),
