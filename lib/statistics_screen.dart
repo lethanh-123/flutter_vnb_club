@@ -35,6 +35,7 @@ class StatisticsScreen extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.all(16),
             child: Row(
+              mainAxisSize: MainAxisSize.min, // Thêm dòng này
               children: [
                 _buildCategoryCard(
                   icon: Icons.sports_tennis,
@@ -42,9 +43,9 @@ class StatisticsScreen extends StatelessWidget {
                   isSelected: true,
                 ),
                 _buildCategoryCard(
-                  icon: Icons.leaderboard,
+                  icon: null,
                   label: 'Xếp hạng',
-                  duprBadge: true,
+                  isDuprOnly: true,
                 ),
                 _buildCategoryCard(
                   icon: Icons.military_tech,
@@ -61,7 +62,7 @@ class StatisticsScreen extends StatelessWidget {
                 _buildMatchHistoryItem(
                   context,
                   date: '23/11',
-                  clubLogo: 'assets/pic.png',
+                  clubLogo: 'assets/pooc_logo.png',
                   title:
                       'Round Robin [DUPR Lv 2.75-3.5] Pick Hub Mix POOC (sân 9-10)',
                   participants: '9 người chơi • 8 trận đấu đã chơi',
@@ -77,10 +78,11 @@ class StatisticsScreen extends StatelessWidget {
   }
 
   Widget _buildCategoryCard({
-    required IconData icon,
+    required IconData? icon,
     required String label,
     bool isSelected = false,
     bool duprBadge = false,
+    bool isDuprOnly = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(right: 12),
@@ -94,39 +96,66 @@ class StatisticsScreen extends StatelessWidget {
             vertical: 16,
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Stack(
-                children: [
-                  Icon(
-                    icon,
-                    color: isSelected ? Colors.white : Colors.black,
-                    size: 24,
+              if (isDuprOnly)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                  if (duprBadge)
-                    Positioned(
-                      right: -8,
-                      top: -8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
+                  decoration: BoxDecoration(
+                    color: Colors.blue[900],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'DUPR',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else
+                SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (icon != null)
+                        Icon(
+                          icon,
+                          color: isSelected ? Colors.white : Colors.black,
+                          size: 24,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue[900],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'DUPR',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                      if (duprBadge)
+                        Positioned(
+                          right: -8,
+                          top: -8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[900],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'DUPR',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
-              ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 8),
               Text(
                 label,
@@ -162,7 +191,7 @@ class StatisticsScreen extends StatelessWidget {
               title:
                   "🏆 ROUND ROBIN [DUPR LV 2.75-3.5] PICK HUB MIX POOC (SÂN 9-10)",
               teamName: "Pooc @Pick Hub Social Club",
-              teamLogo: "assets/pic.png",
+              teamLogo: "assets/pooc_logo.png",
               subtitle: "Liên hệ BTC",
               location: "PooC Cầu Lông & PickleBall",
               fullAddress:
