@@ -6,6 +6,8 @@ import 'profile_screen.dart';
 import 'club_join_screen.dart';
 import 'community_screen.dart';
 import 'statistics_screen.dart';
+import 'court_management_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -19,8 +21,8 @@ class _HomeScreenState extends State<HomeScreen> {
     const HomeContent(),
     const ClubJoinScreen(),
     const CommunityScreen(),
-    const StatisticsScreen(), 
-    const Center(child: Text('Hộp Thư')),
+    const StatisticsScreen(),
+    const ManagementScreen(),
   ];
 
   @override
@@ -55,8 +57,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Thống kê',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.inbox),
-            label: 'Hộp Thư',
+            icon: Icon(Icons.admin_panel_settings), // Thay đổi icon
+            label: 'Quản lý', // Thay đổi label
           ),
         ],
       ),
@@ -418,6 +420,72 @@ class _TimelineItem extends StatelessWidget {
           fontWeight: FontWeight.w500,
           color: Colors.black87,
         ),
+      ),
+    );
+  }
+}
+
+class ManagementScreen extends StatelessWidget {
+  const ManagementScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Quản lý'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildManagementTile(
+              context,
+              icon: Icons.sports_tennis,
+              title: 'Quản lý sân',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CourtManagementScreen(),
+                  ),
+                );
+              },
+            ),
+            _buildManagementTile(
+              context,
+              icon: Icons.location_on,
+              title: 'Quản lý địa điểm',
+              onTap: () {
+                // TODO: Điều hướng đến trang quản lý địa điểm
+              },
+            ),
+            _buildManagementTile(
+              context,
+              icon: Icons.people,
+              title: 'Quản lý người dùng',
+              onTap: () {
+                // TODO: Điều hướng đến trang quản lý người dùng
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManagementTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.blue),
+        title: Text(title),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: onTap,
       ),
     );
   }
