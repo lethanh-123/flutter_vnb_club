@@ -53,6 +53,7 @@ dependencies:
   flutter_esc_pos_utils: ^1.0.1
   url_launcher: ^6.3.1
   font_awesome_flutter: ^10.8.0
+  image_picker: ^1.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -100,7 +101,12 @@ flutter:
     - assets/ava.png
     - assets/match.jpg
     - assets/round_robin.png
-
+    - assets/ese.jpg
+    - assets/pic.png
+    - assets/sh.webp
+    - assets/bank-account.svg
+    - assets/ba.png
+    - assets/pickball_player.webp
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

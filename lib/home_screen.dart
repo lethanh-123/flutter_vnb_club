@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'match_detail_screen.dart';
 import 'create_options_screen.dart';
-
+import 'notifications_screen.dart';
+import 'profile_screen.dart';
+import 'club_join_screen.dart';
+import 'community_screen.dart';
+import 'statistics_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -11,158 +15,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  final List<Widget> _screens = [
+    const HomeContent(),
+    const ClubJoinScreen(),
+    const CommunityScreen(),
+    const StatisticsScreen(), 
+    const Center(child: Text('Hộp Thư')),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header với avatar và notification
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundImage: AssetImage('assets/ava.png'),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'User Admin',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle),
-                    color: Colors.blue,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreateOptionsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // Club stories
-            SizedBox(
-              height: 120,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildClubStory(
-                    logo: 'assets/pickcelball1.jpg',
-                    name: 'ESE TENNIS',
-                    isRequested: true,
-                  ),
-                  _buildClubStory(
-                    logo: 'assets/pickcelball1.jpg',
-                    name: 'Khét Lẹt\nPickleball - Gò Vấp',
-                  ),
-                  _buildClubStory(
-                    logo: 'assets/pickcelball1.jpg',
-                    name: 'NewBorn\nPickleball',
-                  ),
-                  _buildClubStory(
-                    logo: 'assets/pickcelball1.jpg',
-                    name: 'Oasis Pickleball\nQuận 2',
-                  ),
-                ],
-              ),
-            ),
-
-            // Hôm nay section
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Hôm nay',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-
-            // Match list
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Timeline column
-                  SizedBox(
-                    width: 60,
-                    child: ListView(
-                      children: const [
-                        _TimelineItem(time: '7:00'),
-                        _TimelineItem(time: '7:30'),
-                        _TimelineItem(time: '8:00'),
-                      ],
-                    ),
-                  ),
-                  // Vertical timeline line
-                  Container(
-                    width: 1,
-                    color: Colors.grey[300],
-                  ),
-                  // Matches column
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        _buildMatchItem(
-                          time: '7:00',
-                          logo: 'assets/match.jpg',
-                          title:
-                              '[PICKOLAND] ALL LEVEL 7-10AM | MIỄN PHÍ NGƯỜI LẦN ĐẦU',
-                          location: 'PickoLand Thảo Điền Pickleball',
-                          participants: '3/10 Xác nhận tham gia',
-                        ),
-                        _buildMatchItem(
-                          time: '7:00',
-                          logo: 'assets/match.jpg',
-                          title:
-                              '[2.5-3.0] Morning Social @PickoLand - PickoNect',
-                          location: 'PickoLand Thảo Điền Pickleball',
-                          participants: '6/18 Xác nhận tham gia',
-                        ),
-                        _buildMatchItem(
-                          time: '7:30',
-                          logo: 'assets/match.jpg',
-                          title: 'Tuyển social',
-                          location: 'Pickleball Xuân Anh',
-                          participants: '1/12 Xác nhận tham gia',
-                        ),
-                        _buildMatchItem(
-                          time: '8:00',
-                          logo: 'assets/match.jpg',
-                          title:
-                              'Giao hữu 8h tại 110 Đào sư tích. Pk. Nhà Bè. 60k/người',
-                          location: '110 Đ. Đào Sư Tích',
-                          participants: '1/8 Xác nhận tham gia',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
@@ -193,6 +57,183 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.inbox),
             label: 'Hộp Thư',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HomeContent extends StatelessWidget {
+  const HomeContent({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header với avatar và notification
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundImage: AssetImage('assets/ava.png'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'User Admin',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle),
+                  color: Colors.blue,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreateOptionsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Club stories
+          SizedBox(
+            height: 120,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildClubStory(
+                  logo: 'assets/pickcelball1.jpg',
+                  name: 'ESE TENNIS',
+                  isRequested: true,
+                ),
+                _buildClubStory(
+                  logo: 'assets/pickcelball1.jpg',
+                  name: 'Khét Lẹt\nPickleball - Gò Vấp',
+                ),
+                _buildClubStory(
+                  logo: 'assets/pickcelball1.jpg',
+                  name: 'NewBorn\nPickleball',
+                ),
+                _buildClubStory(
+                  logo: 'assets/pickcelball1.jpg',
+                  name: 'Oasis Pickleball\nQuận 2',
+                ),
+              ],
+            ),
+          ),
+
+          // Hôm nay section
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Hôm nay',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ),
+
+          // Match list
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Timeline column
+                SizedBox(
+                  width: 60,
+                  child: ListView(
+                    children: const [
+                      _TimelineItem(time: '7:00'),
+                      _TimelineItem(time: '7:30'),
+                      _TimelineItem(time: '8:00'),
+                    ],
+                  ),
+                ),
+                // Vertical timeline line
+                Container(
+                  width: 1,
+                  color: Colors.grey[300],
+                ),
+                // Matches column
+                Expanded(
+                  child: ListView(
+                    children: [
+                      _buildMatchItem(
+                        context: context,
+                        time: '7:00',
+                        logo: 'assets/match.jpg',
+                        title:
+                            '[PICKOLAND] ALL LEVEL 7-10AM | MIỄN PHÍ NGƯỜI LẦN ĐẦU',
+                        location: 'PickoLand Thảo Điền Pickleball',
+                        participants: '3/10 Xác nhận tham gia',
+                      ),
+                      _buildMatchItem(
+                        context: context,
+                        time: '7:00',
+                        logo: 'assets/match.jpg',
+                        title:
+                            '[2.5-3.0] Morning Social @PickoLand - PickoNect',
+                        location: 'PickoLand Thảo Điền Pickleball',
+                        participants: '6/18 Xác nhận tham gia',
+                      ),
+                      _buildMatchItem(
+                        context: context,
+                        time: '7:30',
+                        logo: 'assets/match.jpg',
+                        title: 'Tuyển social',
+                        location: 'Pickleball Xuân Anh',
+                        participants: '1/12 Xác nhận tham gia',
+                      ),
+                      _buildMatchItem(
+                        context: context,
+                        time: '8:00',
+                        logo: 'assets/match.jpg',
+                        title:
+                            'Giao hữu 8h tại 110 Đào sư tích. Pk. Nhà Bè. 60k/người',
+                        location: '110 Đ. Đào Sư Tích',
+                        participants: '1/8 Xác nhận tham gia',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -253,6 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMatchItem({
+    required BuildContext context,
     required String time,
     required String logo,
     required String title,
@@ -366,7 +408,7 @@ class _TimelineItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100, // Điều chỉnh chiều cao phù hợp với match item
+      height: 100,
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Text(
         time,

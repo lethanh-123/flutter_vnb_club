@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'club_join_screen.dart';
+import 'club_name_screen.dart';
 
 class SportSelectionScreen extends StatefulWidget {
-  const SportSelectionScreen({Key? key}) : super(key: key);
+  final bool isFromCreateOptions;
+
+  const SportSelectionScreen({
+    Key? key,
+    this.isFromCreateOptions = true,
+  }) : super(key: key);
 
   @override
   State<SportSelectionScreen> createState() => _SportSelectionScreenState();
@@ -36,6 +42,25 @@ class _SportSelectionScreenState extends State<SportSelectionScreen> {
     {'name': 'Bóng đá', 'icon': '⚽'},
     {'name': 'Bóng chuyền', 'icon': '🏐'},
   ];
+
+  void _onNext() {
+    print('widget.isFromCreateOptions: ${widget.isFromCreateOptions}');
+    if (widget.isFromCreateOptions) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ClubNameScreen(),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ClubJoinScreen(),
+        ),
+      );
+    }
+  }
 
   final Map<String, String> selectedSports = {};
   String searchQuery = "";
@@ -225,7 +250,7 @@ class _SportSelectionScreenState extends State<SportSelectionScreen> {
       ),
       floatingActionButton: selectedSports.length == 1
           ? FloatingActionButton(
-              onPressed: _goToSportSelection,
+              onPressed: _onNext,
               child: const Icon(Icons.arrow_forward),
             )
           : null,

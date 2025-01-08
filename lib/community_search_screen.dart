@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'sport_selection.dart';
 
 class CommunitySearchScreen extends StatefulWidget {
-  const CommunitySearchScreen({Key? key}) : super(key: key);
+  final bool isFromCreateOptions;
+
+  const CommunitySearchScreen({
+    Key? key,
+    this.isFromCreateOptions = false,
+  }) : super(key: key);
 
   @override
   _CommunitySearchScreenState createState() => _CommunitySearchScreenState();
@@ -61,7 +66,12 @@ class _CommunitySearchScreenState extends State<CommunitySearchScreen> {
   void _goToSportSelection() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SportSelectionScreen()),
+      MaterialPageRoute(
+        builder: (context) => SportSelectionScreen(
+          isFromCreateOptions:
+              widget.isFromCreateOptions, // Truyền giá trị từ widget cha
+        ),
+      ),
     );
   }
 

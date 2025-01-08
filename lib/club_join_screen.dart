@@ -106,18 +106,6 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang Chủ'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Tìm kiếm'),
-          BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Cộng đồng'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart), label: 'Thống kê'),
-          BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Hộp Thư'),
-        ],
-      ),
     );
   }
 

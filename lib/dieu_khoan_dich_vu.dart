@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'community_search_screen.dart';
 
 class TermsAndPolicyScreen extends StatelessWidget {
   const TermsAndPolicyScreen({Key? key}) : super(key: key);
@@ -87,7 +88,15 @@ class TermsAndPolicyScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/communitySearch');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CommunitySearchScreen(
+                        isFromCreateOptions:
+                            false, // Đặt rõ là false khi đi từ Terms screen
+                      ),
+                    ),
+                  );
                 },
                 child: const Text(
                   'Tôi đồng ý',

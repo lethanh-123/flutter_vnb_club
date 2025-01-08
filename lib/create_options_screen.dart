@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'create_match_screen.dart';
 import 'create_tournament_screen.dart';
 import 'community_search_screen.dart';
+import 'notifications_screen.dart';
 
 class CreateOptionsScreen extends StatelessWidget {
   const CreateOptionsScreen({Key? key}) : super(key: key);
@@ -24,49 +25,10 @@ class CreateOptionsScreen extends StatelessWidget {
             const Text('User Admin'),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle),
-            color: Colors.blue,
-            onPressed: () {},
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Club stories
-            SizedBox(
-              height: 120,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildClubStory(
-                    logo: 'assets/ese_tennis.png',
-                    name: 'ESE TENNIS',
-                    isRequested: true,
-                  ),
-                  _buildClubStory(
-                    logo: 'assets/atp_lab.png',
-                    name: 'ATP LAB TOUR',
-                  ),
-                  _buildClubStory(
-                    logo: 'assets/social_pickle.png',
-                    name: 'Social Pickleball\nvà Coach Hiếu',
-                  ),
-                  _buildClubStory(
-                    logo: 'assets/ese_pickle.png',
-                    name: 'ESE PICKLEBALL',
-                  ),
-                ],
-              ),
-            ),
-
             // Create options
             _buildCreateOption(
               icon: Icons.calendar_today,
@@ -109,7 +71,8 @@ class CreateOptionsScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const CommunitySearchScreen(),
+                    builder: (context) =>
+                        const CommunitySearchScreen(isFromCreateOptions: true),
                   ),
                 );
               },
