@@ -54,6 +54,10 @@ dependencies:
   url_launcher: ^6.3.1
   font_awesome_flutter: ^10.8.0
   image_picker: ^1.1.2
+  google_maps_flutter: ^2.10.0
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  dvhcvn: ^2.1.20250101
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -107,6 +111,12 @@ flutter:
     - assets/bank-account.svg
     - assets/ba.png
     - assets/pickball_player.webp
+    - assets/vina.png
+    - assets/rv.jpg
+    - assets/admin.jpg
+    - assets/tennis_yard.jpg
+    - assets/qr.png
+    - assets/mb.webp
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

@@ -7,7 +7,7 @@ import 'club_join_screen.dart';
 import 'community_screen.dart';
 import 'statistics_screen.dart';
 import 'court_management_screen.dart';
-
+import 'user_management_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -453,18 +453,15 @@ class ManagementScreen extends StatelessWidget {
             ),
             _buildManagementTile(
               context,
-              icon: Icons.location_on,
-              title: 'Quản lý địa điểm',
-              onTap: () {
-                // TODO: Điều hướng đến trang quản lý địa điểm
-              },
-            ),
-            _buildManagementTile(
-              context,
               icon: Icons.people,
               title: 'Quản lý người dùng',
               onTap: () {
-                // TODO: Điều hướng đến trang quản lý người dùng
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserManagementScreen(),
+                  ),
+                );
               },
             ),
           ],
