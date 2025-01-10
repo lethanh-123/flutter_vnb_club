@@ -58,6 +58,7 @@ dependencies:
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   dvhcvn: ^2.1.20250101
+  flutter_riverpod: ^2.6.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

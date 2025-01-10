@@ -10,6 +10,10 @@ import 'auth_sreen.dart';
 import 'welcome_screen.dart';
 import 'package:logging/logging.dart';
 import 'community_search_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dupr_client.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dupr_provider.dart';
 final Logger logger = Logger('MyApp'); // Logger declaration
 
 void configureLogging() {
@@ -34,9 +38,19 @@ void configureLogging() {
   });
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  
   configureLogging();
-  runApp(const MyApp());
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

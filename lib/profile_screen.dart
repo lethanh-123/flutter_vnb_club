@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vnb_ios/dupr_login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,8 +74,6 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
 
-            // Reclub promotion card
-
             // Sports section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -90,20 +94,6 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // // Sports list
-            // _buildSportItem(
-            //   'Aussie Footy',
-            //   '🏉',
-            //   'Chuyên nghiệp',
-            //   'Half-Back, Follower',
-            // ),
-            // _buildSportItem(
-            //   'Bóng chuyền',
-            //   '🏐',
-            //   'Mới bắt đầu',
-            //   null,
-            // ),
             _buildSportItem(
               'Cầu lông',
               '🏸',
@@ -112,10 +102,10 @@ class ProfileScreen extends StatelessWidget {
             ),
             _buildSportItem(
               'Pickleball',
-              '🎾',
+              '🏓',
               '2.75',
               null,
-              duprRating: '3.167.5 NR',
+              duprRating: '3.165 NR',
               lobbing: '1 crd',
             ),
             _buildSportItem(
@@ -189,16 +179,38 @@ class ProfileScreen extends StatelessWidget {
           ] else
             Text(level),
           if (duprRating != null)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'DUPR ${duprRating}',
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DuprLoginScreen(),
+                  ),
+                );
+
+                if (result != null) {
+                  setState(() {
+                    var newRating = result['doubles']?.toString() ?? 'NR';
+                    final confidence = result['confidence'];
+                    if (confidence != null) {
+                      newRating =
+                          '$newRating (${confidence.round()}% độ tin cậy)';
+                    }
+                    duprRating = newRating;
+                  });
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'DUPR $duprRating',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
               ),
             ),
           if (lobbing != null)
@@ -210,7 +222,7 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Lobbing ${lobbing}',
+                'Lobbing $lobbing',
                 style: const TextStyle(fontSize: 12),
               ),
             ),
