@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,84 +36,68 @@ class DuprClient {
       };
 
   // Authentication
+// Sửa lại phương thức login
   Future<Map<String, dynamic>?> login(String email, String password) async {
     try {
       logger.info('Bắt đầu đăng nhập với email: $email');
-      
-      final loginUrl = '$_authUrl/api/auth/login';
+
+      final loginUrl = '$_baseUrl/auth/$_version/login';
       logger.info('URL đăng nhập: $loginUrl');
 
-      // In ra payload để debug
       final payload = {
         'email': email,
         'password': password,
-        'returnSecureToken': true
       };
-      logger.info('Payload đăng nhập: ${jsonEncode(payload)}');
+      logger.info('Payload: ${jsonEncode(payload)}');
 
-      final loginResponse = await http.post(
+      logger.info('Gửi request đăng nhập...');
+      final loginResponse = await http
+          .post(
         Uri.parse(loginUrl),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Origin': 'https://dashboard.dupr.gg',
-          'Referer': 'https://dashboard.dupr.gg/',
         },
         body: jsonEncode(payload),
+      )
+          .timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          logger.warning('Request timeout sau 30 giây');
+          throw TimeoutException('Request timeout');
+        },
       );
-
-      logger.info('Status code: ${loginResponse.statusCode}');
-      logger.info('Response headers: ${loginResponse.headers}');
+      ;
+      logger.info('Nhận response với status code: ${loginResponse.statusCode}');
       logger.info('Response body: ${loginResponse.body}');
 
       if (loginResponse.statusCode == 200) {
+        logger.info('Đăng nhập thành công, parsing response data...');
         final loginData = jsonDecode(loginResponse.body);
-        final token = loginData['accessToken'];
-        
+        logger.info('Parsed data: $loginData');
+
+        final token = loginData['result']['token'];
         if (token == null) {
           logger.warning('Token không tồn tại trong response');
           return null;
         }
 
+        logger.info('Token hợp lệ, tiến hành lưu token...');
         await _saveToken(token);
         logger.info('Đã lưu token thành công');
 
-        // Lấy thông tin user
-        final userResponse = await http.get(
-          Uri.parse('$_authUrl/api/users/me'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        );
-
-        logger.info('User API Status code: ${userResponse.statusCode}');
-        logger.info('User API Response: ${userResponse.body}');
-
-        if (userResponse.statusCode == 200) {
-          final userData = jsonDecode(userResponse.body);
-          logger.info('Đăng nhập thành công với user ID: ${userData['id']}');
-          
-          return {
-            'result': {
-              'user': {
-                'id': userData['id'],
-              },
-              'accessToken': token,
-            }
-          };
-        } else {
-          logger.warning('Không thể lấy thông tin user: ${userResponse.statusCode}');
-        }
+        return loginData;
       } else {
-        logger.warning('Đăng nhập thất bại với status: ${loginResponse.statusCode}');
-        logger.warning('Error response: ${loginResponse.body}');
+        logger.warning(
+            'Đăng nhập thất bại với status: ${loginResponse.statusCode}');
+        logger.warning('Error response headers: ${loginResponse.headers}');
+        logger.warning('Error response body: ${loginResponse.body}');
       }
-      
+
       return null;
     } catch (e, stackTrace) {
-      logger.severe('Lỗi đăng nhập', e, stackTrace);
+      logger.severe('Lỗi đăng nhập: $e');
+      logger.severe('Stack trace: $stackTrace');
       return null;
     }
   }
@@ -129,7 +114,8 @@ class DuprClient {
   }
 
   // Player Information
-  Future<Map<String, dynamic>?> getPlayerRatings(String userId, String token) async {
+  Future<Map<String, dynamic>?> getPlayerRatings(
+      String userId, String token) async {
     try {
       logger.info('Đang lấy thông tin rating cho user: $userId');
       final url = '$_baseUrl/player/$_version/$userId';

@@ -4,6 +4,7 @@ import 'dupr_client.dart';
 import 'package:logging/logging.dart';
 import 'dupr_provider.dart';
 import 'dupr_client.dart';
+import 'dupr_rating_screen.dart';
 
 final logger = Logger('DuprLoginScreen');
 
@@ -26,6 +27,7 @@ class _DuprLoginScreenState extends ConsumerState<DuprLoginScreen> {
     super.dispose();
   }
 
+  // Trong _login()
   Future<void> _login() async {
     setState(() => _isLoading = true);
 
@@ -35,29 +37,20 @@ class _DuprLoginScreenState extends ConsumerState<DuprLoginScreen> {
         _emailController.text,
         _passwordController.text,
       );
-      print(_passwordController.text);
+
       if (!mounted) return;
-      print(loginResponse);
+
       if (loginResponse != null) {
-        final userId = loginResponse['result']['user']['id'];
-        final token = loginResponse['result']['accessToken'];
+        // Lưu thông tin người dùng vào provider
+        ref.read(userDataProvider.notifier).state = loginResponse;
 
-        logger.info('Đăng nhập thành công. UserID: $userId');
-
-        final playerResponse = await client.getPlayerRatings(userId, token);
-
-        if (playerResponse != null) {
-          final doubles = playerResponse['result']['ratings']['doubles'];
-          final singles = playerResponse['result']['ratings']['singles'];
-
-          if (mounted) {
-            Navigator.pop(context, {
-              'singles': singles ?? 'NR',
-              'doubles': doubles ?? 'NR',
-              'confidence':
-                  playerResponse['result']['ratings']['doublesConfidence'] ?? 0,
-            });
-          }
+        if (mounted) {
+          // Chuyển đến màn hình hiển thị điểm DUPR
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const DuprRatingScreen(),
+            ),
+          );
         }
       } else {
         if (mounted) {
@@ -67,7 +60,6 @@ class _DuprLoginScreenState extends ConsumerState<DuprLoginScreen> {
         }
       }
     } catch (e) {
-      // logger.error('Lỗi đăng nhập: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Có lỗi xảy ra')),
