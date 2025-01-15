@@ -8,7 +8,6 @@ import 'pickleball_profile_screen.dart';
 import 'providers.dart' as app_provider;
 import 'profile.dart';
 import 'api_service.dart';
-
 import 'settings_screen.dart';
 
 final profileProvider = FutureProvider<Profile>((ref) async {
@@ -34,6 +33,7 @@ final profileProvider = FutureProvider<Profile>((ref) async {
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
+// Trong ProfileScreen khi cập nhật profile
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();

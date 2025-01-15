@@ -71,38 +71,63 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> getMatchesAndTournaments() async {
+  static Future<Map<String, List>> getMatchesAndTournaments() async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/matches_tournaments.php'),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
         },
       );
 
-      print('API Response Status: ${response.statusCode}'); // Debug log
-      print('API Response Body: ${response.body}'); // Debug log
+      // Decode response với UTF-8
+      final decodedResponse = utf8.decode(response.bodyBytes);
 
       if (response.statusCode == 200) {
-        final decodedResponse = json.decode(response.body);
-        if (decodedResponse['success'] == true) {
+        final data = json.decode(decodedResponse);
+
+        if (data['success'] == true) {
+          final matchesJson = data['data']['matches'] as List;
+          final tournamentsJson = data['data']['tournaments'] as List;
+
+          // if (DebugMode) {
+          //   print('Matches JSON: $matchesJson');
+          //   print('Tournaments JSON: $tournamentsJson');
+          // }
+
+          final matches = matchesJson.map((json) {
+            try {
+              return Match.fromJson(json);
+            } catch (e) {
+              print('Error parsing match: $e');
+              print('Match data: $json');
+              rethrow;
+            }
+          }).toList();
+
+          final tournaments = tournamentsJson.map((json) {
+            try {
+              return Tournament.fromJson(json);
+            } catch (e) {
+              print('Error parsing tournament: $e');
+              print('Tournament data: $json');
+              rethrow;
+            }
+          }).toList();
+
           return {
-            'matches': (decodedResponse['data']['matches'] as List)
-                .map((m) => Match.fromJson(m))
-                .toList(),
-            'tournaments': (decodedResponse['data']['tournaments'] as List)
-                .map((t) => Tournament.fromJson(t))
-                .toList(),
+            'matches': matches,
+            'tournaments': tournaments,
           };
         } else {
-          throw Exception(decodedResponse['error'] ?? 'Unknown error');
+          throw Exception('API returned error: ${data['error']}');
         }
       } else {
         throw Exception('Failed to load data: ${response.statusCode}');
       }
     } catch (e) {
-      print('API Call Error: $e'); // Debug log
+      print('API Error: $e');
       throw Exception('Error getting matches and tournaments: $e');
     }
   }
