@@ -5,6 +5,7 @@ import 'preferences.dart';
 import 'dart:convert';
 import 'dieu_khoan_dich_vu.dart';
 import 'home_screen.dart';
+
 class AuthForm extends StatefulWidget {
   final bool isLoginMode;
 
@@ -42,29 +43,55 @@ class _AuthFormState extends State<AuthForm> {
     );
   }
 
-  void login() async {
-    final email = usernameController.text.trim();
-    final password = passwordController.text.trim();
+void login() async {
+  final email = usernameController.text.trim();
+  final password = passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      showErrorDialog("Vui lòng nhập email và mật khẩu.");
-      return;
-    }
+  if (email.isEmpty || password.isEmpty) {
+    showErrorDialog("Vui lòng nhập email và mật khẩu.");
+    return;
+  }
 
+  try {
     final response = await ApiService.callApi('login.php', {
       'email': email,
       'password': password,
     });
-    debugPrint("responsefsdf " + response.toString());
+
+    print('Login response: $response'); // Debug log
+
     if (response != null && response['success'] == true) {
+      // Lưu thông tin user vào SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Lấy thông tin user từ response
+      final userData = response['data']['user'] as Map<String, dynamic>;
+      final accessToken = response['data']['access_token'] as String;
+      
+      print('Saving user data - ID: ${userData['id']}'); // Debug log
+
+      // Lưu thông tin
+      await prefs.setInt('userId', userData['id']);
+      await prefs.setString('userEmail', userData['email']);
+      await prefs.setString('userName', userData['name']);
+      await prefs.setString('accessToken', accessToken);
+      await prefs.setBool('isLoggedIn', true);
+
+      if (!mounted) return;
+
+      // Chuyển đến màn hình chính
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
-      showErrorDialog(response?['error'] ?? "Thông tin đăng nhập không đúng.");
+      showErrorDialog("Đăng nhập thất bại");
     }
+  } catch (e) {
+    print('Login error: $e'); // Debug log
+    showErrorDialog("Có lỗi xảy ra: ${e.toString()}");
   }
+}
 
   void register() async {
     final email = usernameController.text.trim();
