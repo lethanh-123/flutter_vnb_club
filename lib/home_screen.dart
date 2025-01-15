@@ -117,9 +117,9 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Trang chủ',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.group_outlined),
-              activeIcon: Icon(Icons.group),
-              label: 'CLB',
+              icon: Icon(Icons.search_outlined),
+              activeIcon: Icon(Icons.search),
+              label: 'Tìm kiếm',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_outlined),
