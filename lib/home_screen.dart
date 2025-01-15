@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'api_service.dart';
 import 'court_management_screen.dart';
 import 'user_management_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -142,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends ConsumerWidget {
   final List<Match> matches;
   final List<Tournament> tournaments;
   final bool isLoading;
@@ -159,7 +160,9 @@ class HomeContent extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // final profile = ref.watch(profileProvider);
+    final profileAsync = ref.watch(profileProvider);
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -199,17 +202,47 @@ class HomeContent extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const CircleAvatar(
-                      radius: 20,
-                      backgroundImage: AssetImage('assets/ava.png'),
+                    child: profileAsync.when(
+                      data: (profile) => CircleAvatar(
+                        radius: 20,
+                        backgroundImage: 
+                        // profile.avatar != null
+                        //     ? NetworkImage(profile.avatar!) : 
+                            const AssetImage('assets/ava.png')
+                                as ImageProvider,
+                      ),
+                      loading: () => const CircleAvatar(
+                        radius: 20,
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (_, __) => const CircleAvatar(
+                        radius: 20,
+                        backgroundImage: AssetImage('assets/ava.png'),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'User Admin',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  profileAsync.when(
+                    data: (profile) => Text(
+                      profile.fullName ?? '',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    loading: () => const Text(
+                      'Loading...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    error: (_, __) => const Text(
+                      'User Admin',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const Spacer(),

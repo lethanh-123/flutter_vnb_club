@@ -40,7 +40,7 @@ class ApiService {
     }
   }
 
-  Future<Profile> getProfile(int userId) async {
+   Future<Profile> getProfile(int userId) async {
     try {
       print('Calling getProfile for userId: $userId'); // Debug log
 

@@ -53,48 +53,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _loadProfile();
   }
 
-  Future<void> _loadProfile() async {
-    if (!mounted) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
+   Future<void> _loadProfile() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('userId');
-      print('Loaded userId: $userId'); // Debug log
-
-      if (userId == null) {
-        throw Exception('UserId không tồn tại');
-      }
-
-      if (!mounted) return;
-
-      // Gọi API và cập nhật state
-      setState(() {
-        _profileFuture = _apiService.getProfile(userId);
-      });
-
-      // Debug log kết quả
-      _profileFuture?.then((profile) {
-        print('Profile loaded successfully: ${profile.fullName}');
-      }).catchError((error) {
-        print('Error loading profile: $error');
-      });
+      // Refresh profile data
+      await ref.refresh(profileProvider.future);
     } catch (e) {
-      print('Error in _loadProfile: $e'); // Debug log
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: ${e.toString()}')),
-      );
-    } finally {
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-      });
+      print('Error loading profile: $e');
     }
   }
 
