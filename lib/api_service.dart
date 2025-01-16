@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'profile.dart';
 import 'tournament.dart';
 import 'match.dart';
+import 'sport.dart';
+import 'club.dart';
 
 class ApiService {
   static const String baseUrl = "http://192.168.1.251/vnb_club_back_end";
@@ -40,7 +42,7 @@ class ApiService {
     }
   }
 
-   Future<Profile> getProfile(int userId) async {
+  Future<Profile> getProfile(int userId) async {
     try {
       print('Calling getProfile for userId: $userId'); // Debug log
 
@@ -80,7 +82,8 @@ class ApiService {
           'Accept': 'application/json',
         },
       );
-
+      print(
+          'API Response: ${response.statusCode} - ${response.body}'); // Debug log
       // Decode response với UTF-8
       final decodedResponse = utf8.decode(response.bodyBytes);
 
@@ -129,6 +132,68 @@ class ApiService {
     } catch (e) {
       print('API Error: $e');
       throw Exception('Error getting matches and tournaments: $e');
+    }
+  }
+
+  static Future<List<Sport>> fetchSports() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/sports.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+// Decode response với UTF-8
+      final decodedResponse = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data']['sports'] as List)
+              .map((sport) => Sport.fromJson(sport))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load sports');
+      }
+    } catch (e) {
+      print('Error fetching sports: $e');
+      throw Exception('Error fetching sports: $e');
+    }
+  }
+
+  static Future<List<Club>> fetchClubs(
+      {String? sportId, String searchQuery = ''}) async {
+    try {
+      String url = '$baseUrl/clubs.php';
+      if (sportId != null) {
+        url += '?sport_id=$sportId';
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+      final decodedResponse = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data']['clubs'] as List)
+              .map((club) => Club.fromJson(club))
+              .where((club) =>
+                  searchQuery.isEmpty ||
+                  club.name.toLowerCase().contains(searchQuery.toLowerCase()))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load clubs');
+      }
+    } catch (e) {
+      print('Error fetching clubs: $e');
+      throw Exception('Error fetching clubs: $e');
     }
   }
 }

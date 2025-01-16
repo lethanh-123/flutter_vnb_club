@@ -4,6 +4,13 @@ import 'tournament_screen.dart';
 import 'coach_screen.dart';
 import 'club_detail_screen.dart';
 
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'club.dart';
+import 'sport.dart';
+import 'club_detail_screen.dart';
+import 'api_service.dart';
+
 class ClubJoinScreen extends StatefulWidget {
   const ClubJoinScreen({Key? key}) : super(key: key);
 
@@ -15,25 +22,109 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _searchQuery = '';
+  List<Club> _clubs = [];
+  List<Sport> _sports = [];
+  Sport? _selectedSport;
+  bool _isLoading = true;
+  String? _error;
   int _selectedTab = 0;
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
-    _tabController.addListener(() {
+    _tabController.addListener(() {});
+    _loadSports();
+  }
+
+  Future<void> _loadSports() async {
+    try {
+      final sports = await ApiService.fetchSports();
+      setState(() {
+        _sports = sports;
+        _tabController = TabController(length: sports.length, vsync: this);
+        _tabController.addListener(_handleTabSelection);
+        _selectedSport = _sports.isNotEmpty ? _sports.first : null;
+      });
+      await _loadClubs();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _handleTabSelection() {
+    if (_tabController.indexIsChanging) {
       setState(() {
         _selectedTab = _tabController.index;
+        _selectedSport = _sports[_tabController.index];
       });
-    });
+      _loadClubs();
+    }
+  }
+
+  Future<void> _loadClubs() async {
+    if (!mounted) return; // Kiểm tra mounted trước khi thực hiện
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      if (!mounted) return; // Kiểm tra lại mounted sau delay
+
+      final clubs = await ApiService.fetchClubs(
+        sportId: _selectedSport?.id?.toString(),
+        searchQuery: _searchQuery,
+      );
+
+      if (!mounted) return; // Kiểm tra lại mounted sau khi gọi API
+
+      setState(() {
+        _clubs = clubs;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return; // Kiểm tra mounted trước khi setState trong catch
+
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tham gia CLB'),
+        bottom: _sports.isEmpty
+            ? null
+            : TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: _sports
+                    .map((sport) => Tab(
+                          child: Row(
+                            children: [
+                              Image.asset(
+                                'assets/sports/${sport.icon ?? 'default.png'}',
+                                width: 24,
+                                height: 24,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(sport.name),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+      ),
       body: Column(
         children: [
-          // Search Bar
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -41,19 +132,19 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
                 setState(() {
                   _searchQuery = value;
                 });
+                _loadClubs();
               },
               decoration: InputDecoration(
+                hintText: 'Tìm kiếm từ khoá...',
                 prefixIcon: const Icon(Icons.search),
-                hintText: 'Tìm kiếm bằng từ khoá hoặc mã',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25.0),
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
                 filled: true,
                 fillColor: Colors.grey[100],
               ),
             ),
           ),
-
           // Tab Bar
           TabBar(
             controller: _tabController,
@@ -66,8 +157,6 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
               _buildTab('HLV', Icons.sports, 4),
             ],
           ),
-
-          // Tab Content
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -75,18 +164,6 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
                 // Tab CLB
                 Column(
                   children: [
-                    // Filter Chips cho tab CLB
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Row(
-                        children: [
-                          _buildFilterChip(
-                              'Ho Chi Minh City Metropolitan', true),
-                          _buildFilterChip('Thể thao', false),
-                        ],
-                      ),
-                    ),
                     // Danh sách CLB
                     Expanded(
                       child: _buildClubList(),
@@ -106,163 +183,6 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildClubList() {
-    return ListView(
-      padding: const EdgeInsets.all(8.0),
-      children: [
-        _buildClubCard(
-          logoUrl: 'assets/logo_pic.jpg',
-          name: 'SkyPickleball',
-          members: 124,
-          skillLevel: 'Tất cả trình độ',
-          activityTime: 'Th01 4',
-          schedule: '6:00',
-          description: 'SÁNG THỨ 7 VUI VẺ. SKY PICKLE',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ClubDetailScreen(
-                clubName: 'SkyPickleball',
-                clubLogo: 'assets/logo_pic.jpg',
-                coverImage: 'assets/pickcelball1.jpg',
-                type: 'Công khai',
-                sport: 'Pickleball',
-                level: 'Tất cả trình độ',
-                activities: [
-                  Activity(
-                    dayOfWeek: 'Thứ bảy',
-                    time: '6:00',
-                    title: 'SÁNG THỨ 7 VUI VẺ. SKY PICKLE',
-                    currentParticipants: 18,
-                    maxParticipants: 24,
-                  ),
-                ],
-                admins: [
-                  Admin(
-                    name: 'Sky Coach',
-                    role: 'Coach',
-                    avatarUrl: 'assets/coach_2.jpg',
-                  ),
-                  Admin(
-                    name: 'Sky Admin',
-                    role: 'Admin',
-                    avatarUrl: 'assets/coach_2.jpg',
-                  ),
-                ],
-                memberCount: 124,
-                activityCount: 35,
-                schedule: 'Mỗi ngày',
-                description:
-                    'CLB Pickleball dành cho mọi trình độ, tập luyện vui vẻ mỗi sáng.',
-              ),
-            ),
-          ),
-        ),
-        _buildClubCard(
-          logoUrl: 'assets/logo_pic.jpg',
-          name: 'D&S Pickleball Club',
-          members: 182,
-          skillLevel: '3.0',
-          activityTime: 'Th01 6',
-          schedule: '19:00',
-          description: 'HAPPY MONDAY SOCIAL 😊',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ClubDetailScreen(
-                clubName: 'D&S Pickleball Club',
-                clubLogo: 'assets/logo_pic.jpg',
-                coverImage: 'assets/p2.jpg',
-                type: 'Công khai',
-                sport: 'Pickleball',
-                level: '3.0',
-                activities: [
-                  Activity(
-                    dayOfWeek: 'Thứ hai',
-                    time: '19:00',
-                    title: 'HAPPY MONDAY SOCIAL',
-                    currentParticipants: 22,
-                    maxParticipants: 24,
-                  ),
-                ],
-                admins: [
-                  Admin(
-                    name: 'D&S Coach',
-                    role: 'Coach',
-                    avatarUrl: 'assets/coach_2.jpg',
-                  ),
-                  Admin(
-                    name: 'D&S Manager',
-                    role: 'Admin',
-                    avatarUrl: 'assets/coach_2.jpg',
-                  ),
-                ],
-                memberCount: 182,
-                activityCount: 42,
-                schedule: 'Mỗi ngày',
-                description:
-                    'CLB Pickleball chuyên nghiệp, tập trung vào người chơi trình độ 3.0+',
-              ),
-            ),
-          ),
-        ),
-        _buildClubCard(
-          logoUrl: 'assets/logo_pic.jpg',
-          name: 'TS Sports Club',
-          members: 757,
-          skillLevel: 'Tất cả trình độ',
-          activityTime: 'Hoạt động 2 phút trước',
-          schedule: '',
-          description: 'Social Everyday Pickleball',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ClubDetailScreen(
-                clubName: 'TS Sports Club',
-                clubLogo: 'assets/logo_pic.jpg',
-                coverImage: 'assets/p3.jpg',
-                type: 'Công khai',
-                sport: 'Pickleball',
-                level: 'Tất cả trình độ',
-                activities: [
-                  Activity(
-                    dayOfWeek: 'Hàng ngày',
-                    time: '8:00',
-                    title: 'Social Everyday Pickleball',
-                    currentParticipants: 32,
-                    maxParticipants: 40,
-                  ),
-                ],
-                admins: [
-                  Admin(
-                    name: 'TS Head Coach',
-                    role: 'Coach',
-                    avatarUrl: 'assets/coach_2.jpg',
-                  ),
-                  Admin(
-                    name: 'TS Admin 1',
-                    role: 'Admin',
-                    avatarUrl: 'assets/coach_2.jpg',
-                  ),
-                  Admin(
-                    name: 'TS Admin 2',
-                    role: 'Admin',
-                    avatarUrl: 'assets/coach_2.jpg',
-                  ),
-                ],
-                memberCount: 757,
-                activityCount: 65,
-                schedule: 'Mỗi ngày',
-                description:
-                    'CLB Pickleball lớn nhất khu vực, chào đón mọi trình độ.',
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -287,44 +207,78 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (bool selected) {
-          // TODO: Handle filter change
+  Widget _buildClubList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_error'),
+            ElevatedButton(
+              onPressed: _loadClubs,
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_clubs.isEmpty) {
+      return const Center(
+        child: Text('Không tìm thấy CLB nào'),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadClubs,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: _clubs.length,
+        itemBuilder: (context, index) {
+          final club = _clubs[index];
+          return _buildClubCard(club);
         },
       ),
     );
   }
 
-  Widget _buildClubCard({
-    required String logoUrl,
-    required String name,
-    required int members,
-    required String skillLevel,
-    required String activityTime,
-    required String schedule,
-    required String description,
-    required VoidCallback onTap, // Thêm parameter onTap
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+  Widget _buildClubCard(Club club) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      child: InkWell(
+        onTap: () =>
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (context) => ClubDetailScreen(
+            //       clubId: club.id,
+            //       clubName: club.name,
+            //       clubLogo: club.logo ?? 'assets/club_default.png',
+            //       coverImage: 'assets/club_cover.jpg',
+            //       type: club.privacyType,
+            //       sport: club.sport?.name ?? 'Unknown Sport',
+            //       level: club.skillLevel?.level ?? 'All Levels',
+            //       memberCount: club.memberCount,
+            //       description: club.description ?? '',
+            //     ),
+            //   ),
+            // )
+            {},
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(12.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Club Logo
               CircleAvatar(
-                backgroundImage:
-                    AssetImage(logoUrl), // Đổi NetworkImage thành AssetImage
-                radius: 24,
+                radius: 30,
+                backgroundImage: club.logo != null
+                    ? NetworkImage(club.logo!)
+                    : const AssetImage('assets/match.jpg') as ImageProvider,
               ),
               const SizedBox(width: 12),
               // Club Info
@@ -332,62 +286,63 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Club Name
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            club.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          club.privacyType == 'public'
+                              ? Icons.public
+                              : Icons.lock,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
-                    // Member Count and Skill Level
+                    Text(
+                      club.description ?? '',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         const Icon(Icons.people, size: 16),
                         const SizedBox(width: 4),
-                        Text('$members Thành viên'),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.sports_tennis, size: 16),
-                        const SizedBox(width: 4),
-                        Text(skillLevel),
+                        Text('${club.memberCount} thành viên'),
+                        const SizedBox(width: 12),
+                        if (club.skillLevel != null) ...[
+                          const Icon(Icons.sports, size: 16),
+                          const SizedBox(width: 4),
+                          Text(club.skillLevel!.level),
+                        ],
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Activity Time
-                    Text(
-                      activityTime,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 4),
-                    // Description
-                    Text(
-                      description,
-                      style: const TextStyle(fontSize: 14),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              // Schedule
-              if (schedule.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      schedule,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 }

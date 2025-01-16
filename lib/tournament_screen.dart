@@ -1,7 +1,31 @@
 import 'package:flutter/material.dart';
 
-class TournamentScreen extends StatelessWidget {
+import 'api_service.dart';
+import 'tournament.dart';
+import 'dart:async';
+
+class TournamentScreen extends StatefulWidget {
   const TournamentScreen({Key? key}) : super(key: key);
+
+  @override
+  State<TournamentScreen> createState() => _TournamentScreenState();
+}
+
+class _TournamentScreenState extends State<TournamentScreen> {
+  late Future<Map<String, dynamic>> _matchesAndTournaments;
+  String _selectedTab = 'Tất cả';
+
+  @override
+  void initState() {
+    super.initState();
+    _matchesAndTournaments = ApiService.getMatchesAndTournaments();
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _matchesAndTournaments = ApiService.getMatchesAndTournaments();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,46 +49,97 @@ class TournamentScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              _buildTabButton('Tất cả', true),
+              _buildTabButton('Tất cả', _selectedTab == 'Tất cả'),
               const SizedBox(width: 16),
-              _buildTabButton('Thời gian đăng ký', false),
+              _buildTabButton('Thời gian đăng ký', _selectedTab == 'Thời gian đăng ký'),
               const SizedBox(width: 16),
-              _buildTabButton('Đang diễn ra', false),
+              _buildTabButton('Đang diễn ra', _selectedTab == 'Đang diễn ra'),
             ],
           ),
         ),
 
         // Tournament list
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            children: [
-              _buildTournamentCard(
-                image: 'assets/nba_players.webp',
-                sportIcon: Icons.sports_basketball,
-                title: 'Basketball Tourney',
-                status: '1 trận đấu sắp diễn ra.',
-                date: '25/08',
-                location: 'Minneapolis',
-                participants: 8,
-                type: 'Đấu hỗn hợp',
-                isLive: true,
-              ),
-              _buildTournamentCard(
-                image: 'assets/pic.jpg',
-                sportIcon: 'assets/pickle.png',
-                title: 'Giải nội bộ Fun & Health Pickleball',
-                status: '1 trận đấu sắp diễn ra.',
-                date: '25/08',
-                location: 'Minneapolis',
-                participants: 8,
-                type: 'Đấu hỗn hợp',
-                isLive: true,
-              ),
-            ],
+          child: RefreshIndicator(
+            onRefresh: _refreshData,
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: _matchesAndTournaments,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text('Lỗi: ${snapshot.error}'),
+                        ElevatedButton(
+                          onPressed: _refreshData,
+                          child: const Text('Thử lại'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final tournaments = snapshot.data!['tournaments'] as List<Tournament>;
+                
+                // Filter tournaments based on selected tab
+                final filteredTournaments = tournaments.where((tournament) {
+                  switch (_selectedTab) {
+                    case 'Đang diễn ra':
+                      return tournament.isLive;
+                    case 'Thời gian đăng ký':
+                      return tournament.isRegistrationOpen;
+                    default:
+                      return true;
+                  }
+                }).toList();
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  itemCount: filteredTournaments.length,
+                  itemBuilder: (context, index) {
+                    final tournament = filteredTournaments[index];
+                    return _buildTournamentCard(
+                      image: tournament.getImage,
+                      sportIcon: tournament.getSportIcon,
+                      title: tournament.getTitle,
+                      status: tournament.getStatus,
+                      date: tournament.getFormattedDate,
+                      location: tournament.getLocation,
+                      participants: tournament.getParticipants,
+                      type: tournament.getType,
+                      isLive: tournament.getIsLive,
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTabButton(String text, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTab = text;
+        });
+      },
+      child: Text(
+        text,
+        style: TextStyle(
+          color: isSelected ? Colors.blue : Colors.black,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
     );
   }
 
@@ -77,16 +152,6 @@ class TournamentScreen extends StatelessWidget {
         onSelected: (bool selected) {
           // TODO: Implement filter logic
         },
-      ),
-    );
-  }
-
-  Widget _buildTabButton(String text, bool isSelected) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: isSelected ? Colors.blue : Colors.black,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
     );
   }
