@@ -1,7 +1,51 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class CoachScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'coach.dart';
+import 'api_service.dart';
+
+class CoachScreen extends StatefulWidget {
   const CoachScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CoachScreen> createState() => _CoachScreenState();
+}
+
+class _CoachScreenState extends State<CoachScreen> {
+  List<Coach> coaches = [];
+  bool isLoading = true;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCoaches();
+  }
+
+  Future<void> _loadCoaches() async {
+    try {
+      setState(() {
+        isLoading = true;
+        error = null;
+      });
+
+      final loadedCoaches = await ApiService.fetchCoaches();
+
+      setState(() {
+        coaches = loadedCoaches;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,30 +65,27 @@ class CoachScreen extends StatelessWidget {
 
         // Coach list
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              _buildCoachCard(
-                imageUrl: 'assets/coach.webp',
-                name: 'Coach Nelson',
-                sport: 'Quần vợt',
-                flags: ['vn', 'us', 'fr'],
-              ),
-              _buildCoachCard(
-                imageUrl: 'assets/coach.webp',
-                name: 'Coach Nelson',
-                sport: 'Pickleball',
-                flags: ['vn', 'us', 'fr'],
-                description: 'Pickleball Player/Coach',
-              ),
-              _buildCoachCard(
-                imageUrl: 'assets/coach.webp',
-                name: 'Fa Ra',
-                sport: 'Pickleball',
-                description: 'Tennis Player/Coach',
-              ),
-            ],
-          ),
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : error != null
+                  ? Center(child: Text(error!))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: coaches.length,
+                      itemBuilder: (context, index) {
+                        final coach = coaches[index];
+                        return _buildCoachCard(
+                          imageUrl: coach.avatarUrl ?? 'assets/coach.webp',
+                          name: coach.fullName,
+                          sport: coach.sportName,
+                          description: coach.bio,
+                          rating: coach.averageRating,
+                          reviewCount: coach.totalReviews,
+                          isVerified: coach.isVerified,
+                          certifications: coach.certifications,
+                        );
+                      },
+                    ),
         ),
       ],
     );
@@ -67,8 +108,11 @@ class CoachScreen extends StatelessWidget {
     required String imageUrl,
     required String name,
     required String sport,
-    List<String> flags = const [],
     String? description,
+    required double rating,
+    required int reviewCount,
+    required bool isVerified,
+    required List<dynamic> certifications,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -94,45 +138,60 @@ class CoachScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: AssetImage(imageUrl),
+                  backgroundImage: imageUrl.startsWith('http')
+                      ? NetworkImage(imageUrl) as ImageProvider
+                      : AssetImage(imageUrl),
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2,
+                if (isVerified)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
             const SizedBox(width: 16),
-            
+
             // Coach Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (isVerified) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.verified,
+                          color: Colors.blue,
+                          size: 16,
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Icon(
-                        sport == 'Quần vợt' 
+                        sport.toLowerCase().contains('tennis')
                             ? Icons.sports_tennis
                             : Icons.sports_baseball,
                         size: 16,
@@ -147,23 +206,38 @@ class CoachScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (flags.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        ...flags.map((flag) => Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Text(
-                            _getFlagEmoji(flag),
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                        )).toList(),
-                      ],
-                    ),
-                  ],
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      ...List.generate(5, (index) {
+                        return Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          size: 16,
+                          color: Colors.amber,
+                        );
+                      }),
+                      const SizedBox(width: 4),
+                      Text('($reviewCount reviews)'),
+                    ],
+                  ),
                   if (description != null) ...[
                     const SizedBox(height: 8),
                     Text(description),
+                  ],
+                  if (certifications.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 4,
+                      children: certifications
+                          .map((cert) => Chip(
+                                label: Text(
+                                  cert.toString(),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                padding: EdgeInsets.zero,
+                              ))
+                          .toList(),
+                    ),
                   ],
                 ],
               ),
@@ -172,18 +246,5 @@ class CoachScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _getFlagEmoji(String countryCode) {
-    switch (countryCode) {
-      case 'vn':
-        return '🇻🇳';
-      case 'us':
-        return '🇺🇸';
-      case 'fr':
-        return '🇫🇷';
-      default:
-        return '';
-    }
   }
 }

@@ -5,6 +5,8 @@ import 'tournament.dart';
 import 'match.dart';
 import 'sport.dart';
 import 'club.dart';
+import 'coach.dart';
+import 'posts.dart';
 
 class ApiService {
   static const String baseUrl = "http://192.168.1.251/vnb_club_back_end";
@@ -194,6 +196,62 @@ class ApiService {
     } catch (e) {
       print('Error fetching clubs: $e');
       throw Exception('Error fetching clubs: $e');
+    }
+  }
+
+  static Future<List<Coach>> fetchCoaches() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/coaches.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      // Decode response với UTF-8
+      final decodedResponse = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data']['coaches'] as List)
+              .map((coach) => Coach.fromJson(coach))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load coaches');
+      }
+    } catch (e) {
+      print('Error fetching coaches: $e');
+      throw Exception('Error fetching coaches: $e');
+    }
+  }
+
+  static Future<List<Post>> fetchPosts() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/posts.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      // Decode response với UTF-8
+      final decodedResponse = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data']['posts'] as List)
+              .map((post) => Post.fromJson(post))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load posts');
+      }
+    } catch (e) {
+      print('Error fetching posts: $e');
+      throw Exception('Error fetching posts: $e');
     }
   }
 }

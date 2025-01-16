@@ -153,7 +153,7 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
               _buildTab('CLB', Icons.shield, 0),
               _buildTab('KÈO', Icons.calendar_today, 1),
               _buildTab('GIẢI ĐẤU', Icons.emoji_events, 2),
-              _buildTab('NGƯỜI CHƠI', Icons.person, 3),
+              // _buildTab('NGƯỜI CHƠI', Icons.person, 3),
               _buildTab('HLV', Icons.sports, 4),
             ],
           ),
@@ -176,7 +176,7 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
 
                 // Các tab khác
                 const TournamentScreen(),
-                Center(child: Text('Trang Người chơi')),
+                // Center(child: Text('Trang Người chơi')),
                 const CoachScreen(),
               ],
             ),
