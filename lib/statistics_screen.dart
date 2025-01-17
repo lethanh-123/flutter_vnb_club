@@ -49,7 +49,7 @@ class StatisticsScreen extends StatelessWidget {
                 ),
                 _buildCategoryCard(
                   icon: Icons.military_tech,
-                  label: 'Street Cred',
+                  label: 'Độ uy tín',
                 ),
               ],
             ),

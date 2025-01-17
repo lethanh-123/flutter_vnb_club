@@ -31,20 +31,34 @@ class Club {
 
   factory Club.fromJson(Map<String, dynamic> json) {
     return Club(
-      id: json['id'],
-      name: json['name'],
-      communityId: json['community_id'],
+      id: json['id'] as int,
+      name: json['name'] as String,
+      communityId: json['community_id'] as int,
       sport: json['sport'] != null ? Sport.fromJson(json['sport']) : null,
       skillLevel: json['skill_level'] != null
           ? SkillLevel.fromJson(json['skill_level'])
           : null,
-      privacyType: json['privacy_type'],
-      autoApprove: json['auto_approve'],
-      memberCount: json['member_count'],
-      createdAt: json['created_at'],
-      createdBy: json['created_by'],
-      description: json['description'],
-      logo: json['logo'],
+      privacyType: json['privacy_type'] as String,
+      autoApprove: json['auto_approve'] as bool,
+      memberCount: json['member_count'] as int,
+      createdAt: json['created_at'] as String,
+      createdBy: json['created_by'] as int,
+      description: json['description'] as String?,
+      logo: json['logo'] as String?,
     );
   }
+
+  // Getters
+  int get getId => id;
+  String get getName => name;
+  int get getCommunityId => communityId;
+  Sport? get getSport => sport;
+  SkillLevel? get getSkillLevel => skillLevel;
+  String get getPrivacyType => privacyType;
+  bool get getAutoApprove => autoApprove;
+  int get getMemberCount => memberCount;
+  String get getCreatedAt => createdAt;
+  int get getCreatedBy => createdBy;
+  String? get getDescription => description;
+  String? get getLogo => logo;
 }

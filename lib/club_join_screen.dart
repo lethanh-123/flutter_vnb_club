@@ -33,25 +33,7 @@ class _ClubJoinScreenState extends State<ClubJoinScreen>
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {});
-    _loadSports();
-  }
-
-  Future<void> _loadSports() async {
-    try {
-      final sports = await ApiService.fetchSports();
-      setState(() {
-        _sports = sports;
-        _tabController = TabController(length: sports.length, vsync: this);
-        _tabController.addListener(_handleTabSelection);
-        _selectedSport = _sports.isNotEmpty ? _sports.first : null;
-      });
-      await _loadClubs();
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+    _loadClubs(); // Chỉ cần gọi _loadClubs
   }
 
   void _handleTabSelection() {
