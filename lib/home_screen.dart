@@ -31,7 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Tournament> tournaments = [];
   bool isLoading = true;
   String? error;
-
+  int _currentIndex = 0;
+  
   @override
   void initState() {
     super.initState();

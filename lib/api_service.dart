@@ -84,9 +84,7 @@ class ApiService {
           'Accept': 'application/json',
         },
       );
-      print(
-          'API Response: ${response.statusCode} - ${response.body}'); // Debug log
-      // Decode response với UTF-8
+
       final decodedResponse = utf8.decode(response.bodyBytes);
 
       if (response.statusCode == 200) {
@@ -95,11 +93,6 @@ class ApiService {
         if (data['success'] == true) {
           final matchesJson = data['data']['matches'] as List;
           final tournamentsJson = data['data']['tournaments'] as List;
-
-          // if (DebugMode) {
-          //   print('Matches JSON: $matchesJson');
-          //   print('Tournaments JSON: $tournamentsJson');
-          // }
 
           final matches = matchesJson.map((json) {
             try {
