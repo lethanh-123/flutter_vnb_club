@@ -16,6 +16,10 @@ import 'api_service.dart';
 import 'court_management_screen.dart';
 import 'user_management_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dupr_ranking_screen.dart';
+import 'street_cred_screen.dart';
+import 'category_cards.dart';
+import 'providers.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -31,8 +35,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Tournament> tournaments = [];
   bool isLoading = true;
   String? error;
-  int _currentIndex = 0;
-  
+  String _currentStatsView = 'Trận đấu';
+
   @override
   void initState() {
     super.initState();
@@ -70,22 +74,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> screens = [
-      HomeContent(
-        matches: matches,
-        tournaments: tournaments,
-        isLoading: isLoading,
-        error: error,
-        onRefresh: _fetchData,
-      ),
-      const ClubJoinScreen(),
-      const CommunityScreen(),
-      const StatisticsScreen(),
-      const ManagementScreen(),
-    ];
-
     return WillPopScope(
       onWillPop: () async {
+        if (_selectedIndex == 3 && _currentStatsView != 'Trận đấu') {
+          setState(() {
+            _currentStatsView = 'Trận đấu';
+          });
+          return false;
+        }
         if (_lastPressedAt == null ||
             DateTime.now().difference(_lastPressedAt!) >
                 const Duration(seconds: 2)) {
@@ -102,45 +98,99 @@ class _HomeScreenState extends State<HomeScreen> {
         return true;
       },
       child: Scaffold(
-        body: screens[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Trang chủ',
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            HomeContent(
+              matches: matches,
+              tournaments: tournaments,
+              isLoading: isLoading,
+              error: error,
+              onRefresh: _fetchData,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search_outlined),
-              activeIcon: Icon(Icons.search),
-              label: 'Tìm kiếm',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people_outlined),
-              activeIcon: Icon(Icons.people),
-              label: 'Cộng đồng',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart),
-              label: 'Thống kê',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings),
-              label: 'Quản lý',
-            ),
+            const ClubJoinScreen(),
+            const CommunityScreen(),
+            _buildStatisticsView(),
+            const ManagementScreen(),
           ],
+        ),
+        bottomNavigationBar: Theme(
+          data: Theme.of(context).copyWith(
+            canvasColor: Colors.white,
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+                if (index != 3) {
+                  _currentStatsView = 'Trận đấu';
+                }
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: 'Trang chủ',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.search_outlined),
+                activeIcon: Icon(Icons.search),
+                label: 'Tìm kiếm',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.people_outlined),
+                activeIcon: Icon(Icons.people),
+                label: 'Cộng đồng',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.bar_chart_outlined),
+                activeIcon: Icon(Icons.bar_chart),
+                label: 'Thống kê',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings_outlined),
+                activeIcon: Icon(Icons.settings),
+                label: 'Quản lý',
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildStatisticsView() {
+    return Column(
+      children: [
+        CategoryCards(
+          selectedCategory: _currentStatsView,
+          onCategorySelected: (category) {
+            setState(() {
+              _currentStatsView = category;
+            });
+          },
+        ),
+        Expanded(
+          child: _getStatsContent(),
+        ),
+      ],
+    );
+  }
+
+  Widget _getStatsContent() {
+    switch (_currentStatsView) {
+      case 'Trận đấu':
+        return const StatisticsScreen();
+      case 'Xếp hạng':
+        return const DuprRankingScreen(showBottomNav: false);
+      case 'Độ uy tín':
+        return const StreetCredScreen(showBottomNav: false);
+      default:
+        return const StatisticsScreen();
+    }
   }
 }
 
@@ -162,8 +212,8 @@ class HomeContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final profile = ref.watch(profileProvider);
     final profileAsync = ref.watch(profileProvider);
+
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -206,11 +256,7 @@ class HomeContent extends ConsumerWidget {
                     child: profileAsync.when(
                       data: (profile) => CircleAvatar(
                         radius: 20,
-                        backgroundImage: 
-                        // profile.avatar != null
-                        //     ? NetworkImage(profile.avatar!) : 
-                            const AssetImage('assets/ava.png')
-                                as ImageProvider,
+                        backgroundImage: const AssetImage('assets/ava.png'),
                       ),
                       loading: () => const CircleAvatar(
                         radius: 20,
@@ -322,60 +368,12 @@ class HomeContent extends ConsumerWidget {
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Timeline column
-                        SizedBox(
-                          width: 60,
-                          child: ScrollConfiguration(
-                            behavior: ScrollConfiguration.of(context)
-                                .copyWith(scrollbars: false),
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero, // Thêm vào
-                              physics:
-                                  const ClampingScrollPhysics(), // Thêm vào
-                              itemCount: matches.length,
-                              itemBuilder: (context, index) {
-                                final match = matches[index];
-                                return Container(
-                                  height:
-                                      120, // Chiều cao cố định giống với match item
-                                  alignment: Alignment.center, // Căn giữa text
-                                  child: _TimelineItem(
-                                    time: DateFormat('HH:mm')
-                                        .format(match.datetime),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        // Vertical timeline line
+                        _buildTimelineColumn(matches),
                         Container(
                           width: 1,
                           color: Colors.grey[300],
                         ),
-                        // Matches column
-                        Expanded(
-                          child: ScrollConfiguration(
-                            behavior: ScrollConfiguration.of(context)
-                                .copyWith(scrollbars: false),
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero, // Thêm vào
-                              physics:
-                                  const ClampingScrollPhysics(), // Thêm vào
-                              itemCount: matches.length,
-                              itemBuilder: (context, index) {
-                                final match = matches[index];
-                                return Container(
-                                  height: 120, // Chiều cao cố định
-                                  child: _buildMatchItem(
-                                    context: context,
-                                    match: match,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
+                        _buildMatchesColumn(context, matches),
                       ],
                     ),
             ),
@@ -385,13 +383,57 @@ class HomeContent extends ConsumerWidget {
     );
   }
 
+  Widget _buildTimelineColumn(List<Match> matches) {
+    return SizedBox(
+      width: 60,
+      child: ListView.builder(
+        padding: EdgeInsets.zero,
+        physics: const ClampingScrollPhysics(),
+        itemCount: matches.length,
+        itemBuilder: (context, index) {
+          final match = matches[index];
+          return Container(
+            height: 120,
+            alignment: Alignment.center,
+            child: Text(
+              DateFormat('HH:mm').format(match.datetime),
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMatchesColumn(BuildContext context, List<Match> matches) {
+    return Expanded(
+      child: ListView.builder(
+        padding: EdgeInsets.zero,
+        physics: const ClampingScrollPhysics(),
+        itemCount: matches.length,
+        itemBuilder: (context, index) {
+          final match = matches[index];
+          return SizedBox(
+            height: 120,
+            child: _buildMatchItem(
+              context: context,
+              match: match,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildTournamentCard(Tournament tournament) {
     return Container(
       width: 200,
-      height: 110, // Thêm chiều cao cố định
-      margin:
-          const EdgeInsets.only(right: 12, top: 4, bottom: 4), // Giảm margin
-      padding: const EdgeInsets.all(8), // Giảm padding
+      height: 110,
+      margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -406,38 +448,38 @@ class HomeContent extends ConsumerWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // Thêm dòng này
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             tournament.title,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 13, // Giảm font size
+              fontSize: 13,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2), // Giảm spacing
+          const SizedBox(height: 2),
           Text(
             DateFormat('dd/MM/yyyy HH:mm').format(tournament.datetime),
             style: const TextStyle(
               color: Colors.grey,
-              fontSize: 11, // Giảm font size
+              fontSize: 11,
             ),
           ),
-          const SizedBox(height: 2), // Giảm spacing
+          const SizedBox(height: 2),
           Text(
             tournament.location,
-            style: const TextStyle(fontSize: 11), // Giảm font size
+            style: const TextStyle(fontSize: 11),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2), // Giảm spacing
+          const SizedBox(height: 2),
           Text(
             '${tournament.currentParticipants}/${tournament.maxPlayers} người tham gia',
             style: const TextStyle(
               color: Colors.blue,
-              fontSize: 11, // Giảm font size
+              fontSize: 11,
             ),
           ),
         ],
@@ -459,9 +501,8 @@ class HomeContent extends ConsumerWidget {
         // );
       },
       child: Container(
-        height: 120, // Chiều cao cố định
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 8), // Giảm padding
+        height: 120,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             Image.asset(
@@ -473,33 +514,33 @@ class HomeContent extends ConsumerWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min, // Thêm dòng này
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     match.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14, // Giảm font size
+                      fontSize: 14,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4), // Giảm spacing
+                  const SizedBox(height: 4),
                   Text(
                     match.location,
                     style: const TextStyle(
                       color: Colors.grey,
-                      fontSize: 12, // Giảm font size
+                      fontSize: 12,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4), // Giảm spacing
+                  const SizedBox(height: 4),
                   Text(
                     '${match.currentParticipants}/${match.maxPlayers} Xác nhận tham gia',
                     style: const TextStyle(
                       color: Colors.blue,
-                      fontSize: 12, // Giảm font size
+                      fontSize: 12,
                     ),
                   ),
                 ],

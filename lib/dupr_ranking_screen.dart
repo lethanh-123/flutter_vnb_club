@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'category_cards.dart';
 
 class DuprRankingScreen extends StatefulWidget {
-  const DuprRankingScreen({Key? key}) : super(key: key);
+  final bool showBottomNav;
+  final bool showAppBar;
+  
+  const DuprRankingScreen({
+    Key? key,
+    this.showBottomNav = true,
+    this.showAppBar = true,
+  }) : super(key: key);
 
   @override
   State<DuprRankingScreen> createState() => _DuprRankingScreenState();
@@ -14,38 +20,31 @@ class _DuprRankingScreenState extends State<DuprRankingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Thống kê',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Xếp hạng DUPR',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Cập nhật hàng ngày',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Text(
-              'Cập nhật hàng ngày',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ),
+            )
+          : null,
       body: Column(
         children: [
-          CategoryCards(
-            selectedCategory: 'Xếp hạng',
-            onCategorySelected: (category) {
-              if (category == 'Trận đấu') {
-                Navigator.pop(context);
-              }
-            },
-          ),
-
           // Filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -111,72 +110,6 @@ class _DuprRankingScreenState extends State<DuprRankingScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryCard({
-    IconData? icon,
-    required String label,
-    bool isDuprOnly = false,
-    bool isSelected = false,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: Material(
-        borderRadius: BorderRadius.circular(12),
-        color: isSelected ? Colors.blue : Colors.white,
-        elevation: isSelected ? 0 : 1,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isDuprOnly)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[900],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'DUPR',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              else
-                SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: icon != null
-                      ? Icon(
-                          icon,
-                          color: isSelected ? Colors.white : Colors.black,
-                          size: 24,
-                        )
-                      : null,
-                ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

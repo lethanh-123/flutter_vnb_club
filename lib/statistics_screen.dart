@@ -58,27 +58,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CategoryCards(
-              selectedCategory: _selectedCategory,
-              onCategorySelected: (category) {
-                if (category == 'Xếp hạng') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DuprRankingScreen(),
-                    ),
-                  ).then((_) {
-                    setState(() {
-                      _selectedCategory = 'Trận đấu';
-                    });
-                  });
-                } else {
-                  setState(() {
-                    _selectedCategory = category;
-                  });
-                }
-              },
-            ),
             if (_selectedCategory == 'Trận đấu') ...[
               // Tab buttons
               Padding(
