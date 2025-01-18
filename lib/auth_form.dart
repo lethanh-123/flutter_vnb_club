@@ -43,55 +43,53 @@ class _AuthFormState extends State<AuthForm> {
     );
   }
 
-void login() async {
-  final email = usernameController.text.trim();
-  final password = passwordController.text.trim();
+  void login() async {
+    final email = usernameController.text.trim();
+    final password = passwordController.text.trim();
 
-  if (email.isEmpty || password.isEmpty) {
-    showErrorDialog("Vui lòng nhập email và mật khẩu.");
-    return;
-  }
-
-  try {
-    final response = await ApiService.callApi('login.php', {
-      'email': email,
-      'password': password,
-    });
-
-    print('Login response: $response'); // Debug log
-
-    if (response != null && response['success'] == true) {
-      // Lưu thông tin user vào SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      
-      // Lấy thông tin user từ response
-      final userData = response['data']['user'] as Map<String, dynamic>;
-      final accessToken = response['data']['access_token'] as String;
-      
-      print('Saving user data - ID: ${userData['id']}'); // Debug log
-
-      // Lưu thông tin
-      await prefs.setInt('userId', userData['id']);
-      await prefs.setString('userEmail', userData['email']);
-      await prefs.setString('userName', userData['name']);
-      await prefs.setString('accessToken', accessToken);
-      await prefs.setBool('isLoggedIn', true);
-
-      if (!mounted) return;
-
-      // Chuyển đến màn hình chính
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
-      showErrorDialog("Đăng nhập thất bại");
+    if (email.isEmpty || password.isEmpty) {
+      showErrorDialog("Vui lòng nhập email và mật khẩu.");
+      return;
     }
-  } catch (e) {
-    print('Login error: $e'); // Debug log
-    showErrorDialog("Có lỗi xảy ra: ${e.toString()}");
+
+    try {
+      final response = await ApiService.callApi('login.php', {
+        'email': email,
+        'password': password,
+      });
+
+      if (response != null && response['success'] == true) {
+        // Lưu thông tin user vào SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+
+        // Lấy thông tin user từ response
+        final userData = response['data']['user'] as Map<String, dynamic>;
+        final accessToken = response['data']['access_token'] as String;
+
+        print('Saving user data - ID: ${userData['id']}'); // Debug log
+
+        // Lưu thông tin
+        await prefs.setInt('userId', userData['id']);
+        await prefs.setString('userEmail', userData['email']);
+        await prefs.setString('userName', userData['name']);
+        await prefs.setString('accessToken', accessToken);
+        await prefs.setBool('isLoggedIn', true);
+
+        if (!mounted) return;
+
+        // Chuyển đến màn hình chính
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        showErrorDialog("Đăng nhập thất bại");
+      }
+    } catch (e) {
+      print('Login error: $e'); // Debug log
+      showErrorDialog("Có lỗi xảy ra: ${e.toString()}");
+    }
   }
-}
 
   void register() async {
     final email = usernameController.text.trim();
@@ -103,19 +101,34 @@ void login() async {
       return;
     }
 
-    final response = await ApiService.callApi('register.php', {
-      'name': name,
-      'email': email,
-      'password': password,
-    });
-    if (response != null && response['success'] == true) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const TermsAndPolicyScreen()),
-      );
-      setState(() => isLogin = true);
-    } else {
-      showErrorDialog(response?['error'] ?? "Đăng ký thất bại.");
+    try {
+      final response = await ApiService.callApi('register.php', {
+        'name': name,
+        'email': email,
+        'password': password,
+      });
+      
+      print('Register response: $response'); // For debugging
+
+      // Kiểm tra response không null và success là true
+      if (response != null && response['success'] == true) {
+        if (!mounted) return;
+        
+        // Chuyển đến màn hình điều khoản
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const TermsAndPolicyScreen()),
+        );
+        
+        // Chuyển sang chế độ đăng nhập
+        setState(() => isLogin = true);
+      } else {
+        // Hiển thị lỗi từ server hoặc lỗi mặc định
+        showErrorDialog(response?['error'] ?? "Đăng ký thất bại");
+      }
+    } catch (e) {
+      print('Registration error: $e'); // For debugging
+      showErrorDialog("Có lỗi xảy ra khi đăng ký: ${e.toString()}");
     }
   }
 

@@ -118,6 +118,7 @@ flutter:
     - assets/qr.png
     - assets/mb.webp
     - assets/dupr.jpg
+    - assets/default_avatar.jpg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

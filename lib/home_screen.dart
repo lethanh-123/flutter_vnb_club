@@ -164,7 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildStatisticsView() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Title section based on current view
+        _buildStatisticsTitle(),
+
+        // Category selection
         CategoryCards(
           selectedCategory: _currentStatsView,
           onCategorySelected: (category) {
@@ -173,6 +178,8 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           },
         ),
+
+        // Content
         Expanded(
           child: _getStatsContent(),
         ),
@@ -180,16 +187,108 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildStatisticsTitle() {
+    switch (_currentStatsView) {
+      case 'Trận đấu':
+        return Padding(
+          padding: const EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 48.0,
+            bottom: 16.0,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Thống kê',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Cập nhật hàng ngày',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case 'Xếp hạng':
+        return Padding(
+          padding: const EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 48.0,
+            bottom: 16.0,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Xếp hạng DUPR',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Cập nhật hàng ngày',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case 'Độ uy tín':
+        return const Padding(
+          padding: const EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 48.0,
+            bottom: 16.0,
+          ),
+          child: Text(
+            'Street Cred: Bảng xếp hạng',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   Widget _getStatsContent() {
     switch (_currentStatsView) {
       case 'Trận đấu':
-        return const StatisticsScreen();
+        return const StatisticsScreen(
+          showAppBar: false,
+        );
       case 'Xếp hạng':
-        return const DuprRankingScreen(showBottomNav: false);
+        return const DuprRankingScreen(
+          showBottomNav: false,
+          showAppBar: false,
+        );
       case 'Độ uy tín':
-        return const StreetCredScreen(showBottomNav: false);
+        return const StreetCredScreen(
+          showBottomNav: false,
+          showAppBar: false,
+        );
       default:
-        return const StatisticsScreen();
+        return const StatisticsScreen(
+          showAppBar: false,
+        );
     }
   }
 }

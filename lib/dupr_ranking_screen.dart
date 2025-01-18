@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'dupr_ranking.dart';
+import 'api_service.dart';
+
 class DuprRankingScreen extends StatefulWidget {
   final bool showBottomNav;
   final bool showAppBar;
@@ -16,33 +19,40 @@ class DuprRankingScreen extends StatefulWidget {
 
 class _DuprRankingScreenState extends State<DuprRankingScreen> {
   String _selectedFilter = 'Vietnam';
+  List<DuprRanking> _rankings = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRankings();
+  }
+
+  Future<void> _fetchRankings() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+      
+      final rankings = await ApiService.fetchDuprRankings();
+      
+      setState(() {
+        _rankings = rankings;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: widget.showAppBar
-          ? AppBar(
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Xếp hạng DUPR',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Cập nhật hàng ngày',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : null,
       body: Column(
         children: [
           // Filter chips
@@ -94,20 +104,28 @@ class _DuprRankingScreenState extends State<DuprRankingScreen> {
 
           // Rankings list
           Expanded(
-            child: ListView.builder(
-              itemCount: 10,
-              itemBuilder: (context, index) {
-                return _buildRankingItem(
-                  rank: index + 1,
-                  avatar: 'assets/ava.png',
-                  name: 'Player ${index + 1}',
-                  location: 'Ho Chi Minh City Metropolitan, Vietnam',
-                  doublesRating: (6.0 - index * 0.1).toStringAsFixed(3),
-                  singlesRating: 'NR',
-                  gender: index % 2 == 0 ? 'Nam' : null,
-                );
-              },
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(child: Text('Lỗi: $_error'))
+                    : RefreshIndicator(
+                        onRefresh: _fetchRankings,
+                        child: ListView.builder(
+                          itemCount: _rankings.length,
+                          itemBuilder: (context, index) {
+                            final ranking = _rankings[index];
+                            return _buildRankingItem(
+                              rank: index + 1,
+                              avatar: ranking.avatarUrl ?? 'assets/ava.png',
+                              name: ranking.fullName,
+                              location: ranking.location,
+                              doublesRating: ranking.doublesRating.toStringAsFixed(3),
+                              singlesRating: ranking.singlesRating?.toStringAsFixed(3) ?? 'NR',
+                              gender: ranking.gender == 'male' ? 'Nam' : 'Nữ',
+                            );
+                          },
+                        ),
+                      ),
           ),
         ],
       ),
@@ -157,7 +175,9 @@ class _DuprRankingScreenState extends State<DuprRankingScreen> {
           // Avatar
           CircleAvatar(
             radius: 24,
-            backgroundImage: AssetImage(avatar),
+            backgroundImage: avatar.startsWith('assets/')
+                ? AssetImage(avatar) as ImageProvider
+                : NetworkImage(avatar),
           ),
           const SizedBox(width: 12),
 

@@ -8,7 +8,12 @@ import 'dupr_ranking_screen.dart';
 import 'category_cards.dart';
 
 class StatisticsScreen extends StatefulWidget {
-  const StatisticsScreen({Key? key}) : super(key: key);
+  final bool showAppBar;
+
+  const StatisticsScreen({
+    Key? key,
+    this.showAppBar = true,
+  }) : super(key: key);
 
   @override
   State<StatisticsScreen> createState() => _StatisticsScreenState();
@@ -34,27 +39,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Thống kê',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Cập nhật hàng ngày',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

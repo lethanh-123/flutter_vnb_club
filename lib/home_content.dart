@@ -122,7 +122,7 @@ class _HomeContentState extends State<HomeContent> {
         children: [
           const CircleAvatar(
             radius: 20,
-            backgroundImage: AssetImage('assets/default_avatar.png'),
+            backgroundImage: AssetImage('assets/default_avatar.jpg'),
           ),
           const SizedBox(width: 12),
           Expanded(

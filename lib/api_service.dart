@@ -7,6 +7,8 @@ import 'sport.dart';
 import 'club.dart';
 import 'coach.dart';
 import 'posts.dart';
+import 'dupr_ranking.dart';
+import 'street_scred.dart';
 
 class ApiService {
   static const String baseUrl = "http://192.168.1.251/vnb_club_back_end";
@@ -29,7 +31,7 @@ class ApiService {
       print('API Response Status: ${response.statusCode}'); // Debug log
       print('API Response Body: ${response.body}'); // Debug log
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final decodedResponse = json.decode(response.body);
         print('Decoded Response: $decodedResponse'); // Debug log
         return decodedResponse;
@@ -245,6 +247,60 @@ class ApiService {
     } catch (e) {
       print('Error fetching posts: $e');
       throw Exception('Error fetching posts: $e');
+    }
+  }
+
+  static Future<List<DuprRanking>> fetchDuprRankings() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_dupr_rankings.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final decodedResponse = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data'] as List)
+              .map((ranking) => DuprRanking.fromJson(ranking))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load DUPR rankings');
+      }
+    } catch (e) {
+      print('Error fetching DUPR rankings: $e');
+      throw Exception('Error fetching DUPR rankings: $e');
+    }
+  }
+
+  static Future<List<StreetCred>> fetchStreetCred(String period) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_street_cred.php?period=$period'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final decodedResponse = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data'] as List)
+              .map((cred) => StreetCred.fromJson(cred))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load Street Cred');
+      }
+    } catch (e) {
+      print('Error fetching Street Cred: $e');
+      throw Exception('Error fetching Street Cred: $e');
     }
   }
 }
