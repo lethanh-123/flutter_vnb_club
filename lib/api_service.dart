@@ -10,6 +10,7 @@ import 'posts.dart';
 import 'dupr_ranking.dart';
 import 'street_scred.dart';
 import 'court.dart';
+import 'user.dart';
 
 class ApiService {
   static const String baseUrl = "http://192.168.1.251/vnb_club_back_end";
@@ -329,6 +330,30 @@ class ApiService {
     } catch (e) {
       print('Error fetching courts: $e');
       throw Exception('Error fetching courts: $e');
+    }
+  }
+
+  static Future<List<User>> fetchUsers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_users.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      print('API Response fetchUsers: ${response.statusCode} - ${response.body}'); // Debug log
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          return (data['data']['users'] as List)
+              .map((user) => User.fromJson(user))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load users');
+      }
+    } catch (e) {
+      throw Exception('Error fetching users: $e');
     }
   }
 }
