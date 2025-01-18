@@ -9,6 +9,7 @@ import 'coach.dart';
 import 'posts.dart';
 import 'dupr_ranking.dart';
 import 'street_scred.dart';
+import 'court.dart';
 
 class ApiService {
   static const String baseUrl = "http://192.168.1.251/vnb_club_back_end";
@@ -301,6 +302,33 @@ class ApiService {
     } catch (e) {
       print('Error fetching Street Cred: $e');
       throw Exception('Error fetching Street Cred: $e');
+    }
+  }
+
+  static Future<List<Court>> fetchCourts() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_courts.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final decodedResponse = utf8.decode(response.bodyBytes);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data']['courts'] as List)
+              .map((court) => Court.fromJson(court))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
+      } else {
+        throw Exception('Failed to load courts');
+      }
+    } catch (e) {
+      print('Error fetching courts: $e');
+      throw Exception('Error fetching courts: $e');
     }
   }
 }

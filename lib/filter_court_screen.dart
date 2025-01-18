@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:dvhcvn/dvhcvn.dart';
 
 class FilterCourtScreen extends StatefulWidget {
-  const FilterCourtScreen({Key? key}) : super(key: key);
+  final Set<String> selectedTypes;
+  final Level1? selectedProvince;
+  final Level2? selectedDistrict;
+  final Level3? selectedWard;
+
+  const FilterCourtScreen({
+    Key? key,
+    required this.selectedTypes,
+    this.selectedProvince,
+    this.selectedDistrict,
+    this.selectedWard,
+  }) : super(key: key);
 
   @override
   State<FilterCourtScreen> createState() => _FilterCourtScreenState();

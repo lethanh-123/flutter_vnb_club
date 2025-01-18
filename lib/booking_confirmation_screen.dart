@@ -320,15 +320,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              widget.court.logo,
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                          // ClipRRect(
+                          //   borderRadius: BorderRadius.circular(8),
+                          //   child: Image.asset(
+                          //     widget.court.logo,
+                          //     width: 80,
+                          //     height: 80,
+                          //     fit: BoxFit.cover,
+                          //   ),
+                          // ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
@@ -347,14 +347,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     Text(' ${widget.court.rating}'),
                                   ],
                                 ),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on_outlined,
-                                        size: 16),
-                                    const SizedBox(width: 4),
-                                    Text('Cách ${widget.court.distance}'),
-                                  ],
-                                ),
+                                // Row(
+                                //   children: [
+                                //     const Icon(Icons.location_on_outlined,
+                                //         size: 16),
+                                //     const SizedBox(width: 4),
+                                //     Text('Cách ${widget.court.distance}'),
+                                //   ],
+                                // ),
                                 Text(widget.court.address),
                               ],
                             ),

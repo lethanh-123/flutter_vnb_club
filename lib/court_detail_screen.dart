@@ -68,7 +68,7 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
                     children: [
                       const Icon(Icons.check_circle, color: Colors.green),
                       const SizedBox(width: 8),
-                      const Text('Đã liên kết 24/7'),
+                      const Text('Đã liên kết VNB_CLUB'),
                     ],
                   ),
                   const SizedBox(height: 8),
