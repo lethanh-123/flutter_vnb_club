@@ -1,5 +1,6 @@
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
+import 'booking.dart';
 
 class Court {
   final int id;
@@ -56,35 +57,66 @@ class Court {
 
   factory Court.fromJson(Map<String, dynamic> json) {
     // Parse location string "(lat,lng)" to LatLng
-    final locationStr =
-        json['location'].replaceAll('(', '').replaceAll(')', '');
-    final coords = locationStr.split(',');
-    final lat = double.parse(coords[0]);
-    final lng = double.parse(coords[1]);
+    // final locationStr =
+    //     json['location'].replaceAll('(', '').replaceAll(')', '');
+    // final coords = locationStr.split(',');
+    // final lat = double.parse(coords[0]);
+    // final lng = double.parse(coords[1]);
+    LatLng parseLocation(String? locationStr) {
+      if (locationStr == null) return const LatLng(0, 0);
+      try {
+        final coords = locationStr
+            .replaceAll('(', '')
+            .replaceAll(')', '')
+            .split(',')
+            .map((e) => double.tryParse(e.trim()) ?? 0)
+            .toList();
+        return LatLng(coords[0], coords[1]);
+      } catch (e) {
+        return const LatLng(0, 0);
+      }
+    }
 
+    // Parse images with null safety
+    List<String> parseImages(dynamic images) {
+      if (images == null) return [];
+      if (images is List) {
+        return images.map((e) => e.toString()).toList();
+      }
+      return [];
+    }
+
+    // Parse amenities with null safety
+    List<String> parseAmenities(dynamic amenities) {
+      if (amenities == null) return [];
+      if (amenities is List) {
+        return amenities.map((e) => e.toString()).toList();
+      }
+      return [];
+    }
     return Court(
-      id: json['id'],
-      name: json['name'],
-      address: json['address'],
-      latLng: LatLng(lat, lng),
-      pricePerHour: json['price_per_hour'].toDouble(),
-      type: json['type'],
-      phone: json['phone'],
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      address: json['address'] ?? '',
+      latLng: parseLocation(json['location']?.toString()),
+      pricePerHour: (json['price_per_hour'] ?? 0).toDouble(),
+      type: json['type'] ?? '',
+      phone: json['phone'] ?? '',
       email: json['email'],
       website: json['website'],
       description: json['description'],
-      logoUrl: json['logo_url'],
-      images: List<String>.from(json['images']),
-      rating: json['rating'].toInt(),
-      totalReviews: json['total_reviews'],
-      amenities: List<String>.from(json['amenities']),
-      openingHours: json['opening_hours'],
-      isVerified: json['is_verified'],
-      status: json['status'],
+      logoUrl: json['logo_url'] ?? '',
+      images: parseImages(json['images']),
+      rating: json['rating'] ?? 0,
+      totalReviews: json['total_reviews'] ?? 0,
+      amenities: parseAmenities(json['amenities']),
+      openingHours: json['opening_hours'] is Map ? json['opening_hours'] : {},
+      isVerified: json['is_verified'] ?? false,
+      status: json['status'] ?? 'unavailable',
       cancellationPolicy: json['cancellation_policy'],
       rules: json['rules'],
-      minBookingTime: json['min_booking_time'],
-      maxBookingTime: json['max_booking_time'],
+      minBookingTime: json['min_booking_time'] ?? 60,
+      maxBookingTime: json['max_booking_time'] ?? 180,
       specialHours: (json['special_hours'] as List)
           .map((h) => SpecialHour.fromJson(h))
           .toList(),
@@ -239,31 +271,31 @@ class SpecialHour {
   }
 }
 
-class Booking {
-  final String startTime;
-  final String endTime;
-  final String status;
+// class Booking {
+//   final String startTime;
+//   final String endTime;
+//   final String status;
 
-  Booking({
-    required this.startTime,
-    required this.endTime,
-    required this.status,
-  });
+//   Booking({
+//     required this.startTime,
+//     required this.endTime,
+//     required this.status,
+//   });
 
-  factory Booking.fromJson(Map<String, dynamic> json) {
-    return Booking(
-      startTime: json['start_time'],
-      endTime: json['end_time'],
-      status: json['status'],
-    );
-  }
+//   factory Booking.fromJson(Map<String, dynamic> json) {
+//     return Booking(
+//       startTime: json['start_time'],
+//       endTime: json['end_time'],
+//       status: json['status'],
+//     );
+//   }
 
-  String getFormattedTime() {
-    return '$startTime - $endTime';
-  }
+//   String getFormattedTime() {
+//     return '$startTime - $endTime';
+//   }
 
-  bool isOverlapping(String checkStartTime, String checkEndTime) {
-    return startTime.compareTo(checkEndTime) < 0 &&
-        endTime.compareTo(checkStartTime) > 0;
-  }
-}
+//   bool isOverlapping(String checkStartTime, String checkEndTime) {
+//     return startTime.compareTo(checkEndTime) < 0 &&
+//         endTime.compareTo(checkStartTime) > 0;
+//   }
+// }

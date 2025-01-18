@@ -339,13 +339,14 @@ class ApiService {
         Uri.parse('$baseUrl/get_users.php'),
         headers: {'Content-Type': 'application/json'},
       );
-      print('API Response fetchUsers: ${response.statusCode} - ${response.body}'); // Debug log
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          return (data['data']['users'] as List)
+          final users = (data['data']['users'] as List)
               .map((user) => User.fromJson(user))
               .toList();
+          return users;
         } else {
           throw Exception(data['error'] ?? 'Unknown error');
         }

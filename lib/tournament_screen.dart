@@ -13,6 +13,8 @@ class TournamentScreen extends StatefulWidget {
 
 class _TournamentScreenState extends State<TournamentScreen> {
   late Future<Map<String, dynamic>> _matchesAndTournaments;
+  // late Future<Map<String, dynamic>> vxcv;
+
   String _selectedTab = 'Tất cả';
 
   @override
@@ -51,7 +53,8 @@ class _TournamentScreenState extends State<TournamentScreen> {
             children: [
               _buildTabButton('Tất cả', _selectedTab == 'Tất cả'),
               const SizedBox(width: 16),
-              _buildTabButton('Thời gian đăng ký', _selectedTab == 'Thời gian đăng ký'),
+              _buildTabButton(
+                  'Thời gian đăng ký', _selectedTab == 'Thời gian đăng ký'),
               const SizedBox(width: 16),
               _buildTabButton('Đang diễn ra', _selectedTab == 'Đang diễn ra'),
             ],
@@ -70,7 +73,8 @@ class _TournamentScreenState extends State<TournamentScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const Icon(Icons.error_outline,
+                            size: 48, color: Colors.red),
                         const SizedBox(height: 16),
                         Text('Lỗi: ${snapshot.error}'),
                         ElevatedButton(
@@ -86,8 +90,9 @@ class _TournamentScreenState extends State<TournamentScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final tournaments = snapshot.data!['tournaments'] as List<Tournament>;
-                
+                final tournaments =
+                    snapshot.data!['tournaments'] as List<Tournament>;
+
                 // Filter tournaments based on selected tab
                 final filteredTournaments = tournaments.where((tournament) {
                   switch (_selectedTab) {
