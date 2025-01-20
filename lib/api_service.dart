@@ -11,6 +11,7 @@ import 'dupr_ranking.dart';
 import 'street_scred.dart';
 import 'court.dart';
 import 'user.dart';
+import 'auth_service.dart';
 
 class ApiService {
   static const String baseUrl = "http://192.168.1.251/vnb_club_back_end";
@@ -333,74 +334,124 @@ class ApiService {
     }
   }
 
-  static Future<List<User>> fetchUsers() async {
+  // Lấy danh sách users
+  static Future<List<User>> fetchUsers({String? role}) async {
     try {
+      final refreshToken = await AuthService.getRefreshToken();
+      if (refreshToken == null) throw Exception('No token found');
+
+      final url = role != null 
+          ? '$baseUrl/get_users.php?role=$role'
+          : '$baseUrl/get_users.php';
+
       final response = await http.get(
-        Uri.parse('$baseUrl/get_users.php'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $refreshToken',
+        },
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          final users = (data['data']['users'] as List)
-              .map((user) => User.fromJson(user))
-              .toList();
-          return users;
+          final List<dynamic> usersJson = data['data']['users'];
+          return usersJson.map((json) => User.fromJson(json)).toList();
         } else {
-          throw Exception(data['error'] ?? 'Unknown error');
+          throw Exception(data['error'] ?? 'Failed to fetch users');
         }
       } else {
-        throw Exception('Failed to load users');
+        throw Exception('Failed to fetch users: ${response.statusCode}');
       }
     } catch (e) {
+      print('Error fetching users: $e');
       throw Exception('Error fetching users: $e');
     }
   }
 
+  static Future<Map<String, String>> _getHeaders() async {
+    final token = await AuthService.getToken(); // Implement this
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
+
+  // Tạo user mới
   static Future<bool> createUser(Map<String, dynamic> userData) async {
     try {
+      final token = await AuthService.getToken();
+      if (token == null) throw Exception('No token found');
+
       final response = await http.post(
         Uri.parse('$baseUrl/create_user.php'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
         body: json.encode(userData),
       );
 
       final data = json.decode(response.body);
-      return data['success'] == true;
+      if (data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(data['error'] ?? 'Failed to create user');
+      }
     } catch (e) {
       throw Exception('Error creating user: $e');
     }
   }
 
-  static Future<bool> updateUser(String userId, Map<String, dynamic> userData) async {
+  // Cập nhật user
+  static Future<bool> updateUser(Map<String, dynamic> userData) async {
     try {
+      final refreshToken = await AuthService.getRefreshToken();
+      if (refreshToken == null) throw Exception('No token found');
+
       final response = await http.put(
         Uri.parse('$baseUrl/update_user.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'id': userId,
-          ...userData,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $refreshToken',
+        },
+        body: json.encode(userData),
       );
 
       final data = json.decode(response.body);
-      return data['success'] == true;
+      if (data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(data['error'] ?? 'Failed to update user');
+      }
     } catch (e) {
+      print('Error updating user: $e');
       throw Exception('Error updating user: $e');
     }
   }
 
+  // Xóa user
   static Future<bool> deleteUser(String userId) async {
     try {
+      final refreshToken = await AuthService.getRefreshToken();
+      if (refreshToken == null) throw Exception('No token found');
+
       final response = await http.delete(
         Uri.parse('$baseUrl/delete_user.php?id=$userId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $refreshToken',
+        },
       );
 
       final data = json.decode(response.body);
-      return data['success'] == true;
+      if (data['success'] == true) {
+        return true;
+      } else {
+        throw Exception(data['error'] ?? 'Failed to delete user');
+      }
     } catch (e) {
+      print('Error deleting user: $e');
       throw Exception('Error deleting user: $e');
     }
   }

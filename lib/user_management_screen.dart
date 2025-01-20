@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'user.dart';
 import 'booking.dart';
+import 'auth_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({Key? key}) : super(key: key);
 
   @override
-  State<UserManagementScreen> createState() => _UserManagementScreenState();
+  _UserManagementScreenState createState() => _UserManagementScreenState();
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
+  bool isAdmin = false;
   String? _selectedRole;
   List<User> users = [];
   List<User> filteredUsers = [];
@@ -22,97 +24,140 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _selectedRoleForAdd;
-  
+
   @override
   void initState() {
     super.initState();
+    _checkAdminRole();
     _fetchUsers();
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _searchController.dispose();
-    super.dispose();
+  void _filterUsers(String query) {
+    setState(() {
+      filteredUsers = users.where((user) {
+        final nameLower = user.name.toLowerCase();
+        final emailLower = user.email.toLowerCase();
+        final searchLower = query.toLowerCase();
+        return nameLower.contains(searchLower) ||
+            emailLower.contains(searchLower);
+      }).toList();
+    });
   }
 
-  void _showAddUserDialog() {
+  Future<void> _checkAdminRole() async {
+    try {
+      final currentUser = await AuthService.getCurrentUser();
+      setState(() {
+        isAdmin = currentUser?.role == 'admin';
+      });
+    } catch (e) {
+      print('Error checking admin role: $e');
+    }
+  }
+
+  Future<void> _fetchUsers() async {
+    try {
+      setState(() {
+        isLoading = true;
+        error = null;
+      });
+
+      final fetchedUsers = await ApiService.fetchUsers(role: _selectedRole);
+      setState(() {
+        users = fetchedUsers;
+        filteredUsers = users;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _showAddUserDialog() async {
+    _nameController.clear();
+    _emailController.clear();
+    _passwordController.clear();
+    _selectedRoleForAdd = null;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Thêm người dùng mới'),
         content: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập tên';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Email không hợp lệ';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Mật khẩu'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập mật khẩu';
-                  }
-                  if (value.length < 6) {
-                    return 'Mật khẩu phải có ít nhất 6 ký tự';
-                  }
-                  return null;
-                },
-              ),
-              DropdownButtonFormField<String>(
-                value: _selectedRoleForAdd,
-                decoration: const InputDecoration(labelText: 'Vai trò'),
-                items: ['admin', 'court_owner', 'staff', 'customer']
-                    .map((role) => DropdownMenuItem(
-                          value: role,
-                          child: Text(User(
-                            id: '',
-                            name: '',
-                            email: '',
-                            role: role,
-                            createdAt: '',
-                          ).getRoleName()),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedRoleForAdd = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Vui lòng chọn vai trò';
-                  }
-                  return null;
-                },
-              ),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Tên'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng nhập tên';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng nhập email';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Email không hợp lệ';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Mật khẩu'),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng nhập mật khẩu';
+                    }
+                    if (value.length < 6) {
+                      return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    }
+                    return null;
+                  },
+                ),
+                DropdownButtonFormField<String>(
+                  value: _selectedRoleForAdd,
+                  decoration: const InputDecoration(labelText: 'Vai trò'),
+                  items: ['admin', 'court_owner', 'staff', 'customer']
+                      .map((role) => DropdownMenuItem(
+                            value: role,
+                            child: Text(role == 'admin'
+                                ? 'Admin'
+                                : role == 'court_owner'
+                                    ? 'Chủ sân'
+                                    : role == 'staff'
+                                        ? 'Nhân viên'
+                                        : 'Khách hàng'),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRoleForAdd = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Vui lòng chọn vai trò';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -135,7 +180,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     Navigator.pop(context);
                     _fetchUsers();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Thêm người dùng thành công')),
+                      const SnackBar(
+                          content: Text('Thêm người dùng thành công')),
                     );
                   }
                 } catch (e) {
@@ -152,78 +198,82 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
-  void _showEditUserDialog(User user) {
+  Future<void> _showEditUserDialog(User user) async {
     _nameController.text = user.name;
     _emailController.text = user.email;
+    _passwordController.clear();
     _selectedRoleForAdd = user.role;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sửa thông tin người dùng'),
+        title: const Text('Cập nhật người dùng'),
         content: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập tên';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Email không hợp lệ';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Mật khẩu mới (để trống nếu không đổi)',
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Tên'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng nhập tên';
+                    }
+                    return null;
+                  },
                 ),
-                obscureText: true,
-              ),
-              DropdownButtonFormField<String>(
-                value: _selectedRoleForAdd,
-                decoration: const InputDecoration(labelText: 'Vai trò'),
-                items: ['admin', 'court_owner', 'staff', 'customer']
-                    .map((role) => DropdownMenuItem(
-                          value: role,
-                          child: Text(User(
-                            id: '',
-                            name: '',
-                            email: '',
-                            role: role,
-                            createdAt: '',
-                          ).getRoleName()),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedRoleForAdd = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Vui lòng chọn vai trò';
-                  }
-                  return null;
-                },
-              ),
-            ],
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Vui lòng nhập email';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Email không hợp lệ';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Mật khẩu mới (để trống nếu không đổi)',
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value != null && value.isNotEmpty && value.length < 6) {
+                      return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    }
+                    return null;
+                  },
+                ),
+                if (isAdmin)
+                  DropdownButtonFormField<String>(
+                    value: _selectedRoleForAdd,
+                    decoration: const InputDecoration(labelText: 'Vai trò'),
+                    items: ['admin', 'court_owner', 'staff', 'customer']
+                        .map((role) => DropdownMenuItem(
+                              value: role,
+                              child: Text(role == 'admin'
+                                  ? 'Admin'
+                                  : role == 'court_owner'
+                                      ? 'Chủ sân'
+                                      : role == 'staff'
+                                          ? 'Nhân viên'
+                                          : 'Khách hàng'),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedRoleForAdd = value;
+                      });
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -235,25 +285,28 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 try {
-                  final userData = {
+                  final updateData = {
+                    'id': user.id,
                     'name': _nameController.text,
                     'email': _emailController.text,
-                    'role': _selectedRoleForAdd,
                   };
 
                   if (_passwordController.text.isNotEmpty) {
-                    userData['password'] = _passwordController.text;
+                    updateData['password'] = _passwordController.text;
                   }
 
-                  final success = await ApiService.updateUser(user.id, userData);
+                  if (isAdmin && _selectedRoleForAdd != null) {
+                    updateData['role'] = _selectedRoleForAdd ?? "";
+                  }
+
+                  final success = await ApiService.updateUser(updateData);
 
                   if (success) {
                     Navigator.pop(context);
                     _fetchUsers();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Cập nhật thông tin thành công'),
-                      ),
+                          content: Text('Cập nhật người dùng thành công')),
                     );
                   }
                 } catch (e) {
@@ -263,14 +316,59 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 }
               }
             },
-            child: const Text('Lưu'),
+            child: const Text('Cập nhật'),
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteConfirmDialog(User user) {
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildUserListItem(User user) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ExpansionTile(
+        leading: CircleAvatar(
+          child: Text(user.name[0].toUpperCase()),
+        ),
+        title: Text(user.name),
+        subtitle: Text(user.email),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Chip(
+              label: Text(
+                user.getRoleName(),
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              backgroundColor: user.getRoleColor(),
+            ),
+            if (isAdmin) ...[
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _showEditUserDialog(user),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _showDeleteConfirmDialog(user),
+              ),
+            ],
+          ],
+        ),
+        children: [_buildUserDetails(user)],
+      ),
+    );
+  }
+
+  Future<void> _showDeleteConfirmDialog(User user) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -310,38 +408,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _fetchUsers() async {
-    try {
-      setState(() {
-        isLoading = true;
-        error = null;
-      });
-      final fetchedUsers = await ApiService.fetchUsers();
-      setState(() {
-        users = fetchedUsers;
-        filteredUsers = users;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        error = e.toString();
-        isLoading = false;
-      });
-    }
-  }
-
-  void _filterUsers(String query) {
-    setState(() {
-      filteredUsers = users.where((user) {
-        final nameMatch = user.name.toLowerCase().contains(query.toLowerCase());
-        final emailMatch =
-            user.email.toLowerCase().contains(query.toLowerCase());
-        final roleMatch = _selectedRole == null || user.role == _selectedRole;
-        return (nameMatch || emailMatch) && roleMatch;
-      }).toList();
-    });
   }
 
   Widget _buildUserDetails(User user) {
@@ -470,142 +536,124 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (error != null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Error: $error'),
-              ElevatedButton(
-                onPressed: _fetchUsers,
-                child: const Text('Thử lại'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quản lý người dùng'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _showAddUserDialog,
-          ),
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _showAddUserDialog,
+            ),
         ],
       ),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Column(
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
               children: [
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm theo tên hoặc email...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Tìm kiếm theo tên hoặc email...',
+                      prefixIcon: Icon(Icons.search),
                     ),
+                    onChanged: _filterUsers,
                   ),
-                  onChanged: _filterUsers,
                 ),
-                const SizedBox(height: 16),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      FilterChip(
-                        label: const Text('Tất cả'),
-                        selected: _selectedRole == null,
-                        onSelected: (selected) {
-                          setState(() {
-                            _selectedRole = null;
-                            _filterUsers(_searchController.text);
-                          });
-                        },
+                if (isAdmin) ...[
+                  const SizedBox(width: 8),
+                  DropdownButton<String>(
+                    value: _selectedRole,
+                    hint: const Text('Tất cả'),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('Tất cả'),
                       ),
-                      const SizedBox(width: 8),
                       ...['admin', 'court_owner', 'staff', 'customer']
-                          .map((role) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: FilterChip(
-                                  label: Text(User(
-                                    id: '',
-                                    name: '',
-                                    email: '',
-                                    role: role,
-                                    createdAt: '',
-                                    phone: '',
-                                  ).getRoleName()),
-                                  selected: _selectedRole == role,
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      _selectedRole = selected ? role : null;
-                                      _filterUsers(_searchController.text);
-                                    });
-                                  },
-                                ),
-                              )),
+                          .map((role) => DropdownMenuItem(
+                                value: role,
+                                child: Text(role == 'admin'
+                                    ? 'Admin'
+                                    : role == 'court_owner'
+                                        ? 'Chủ sân'
+                                        : role == 'staff'
+                                            ? 'Nhân viên'
+                                            : 'Khách hàng'),
+                              ))
+                          .toList(),
                     ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedRole = value;
+                      });
+                      _fetchUsers();
+                    },
                   ),
-                ),
+                ],
               ],
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredUsers.length,
-              itemBuilder: (context, index) {
-                final user = filteredUsers[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ExpansionTile(
-                    leading: CircleAvatar(
-                      child: Text(user.name[0].toUpperCase()),
-                    ),
-                    title: Text(user.name),
-                    subtitle: Text(user.email),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Chip(
-                          label: Text(
-                            user.getRoleName(),
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : error != null
+                    ? Center(child: Text('Lỗi: $error'))
+                    : filteredUsers.isEmpty
+                        ? const Center(child: Text('Không có người dùng nào'))
+                        : ListView.builder(
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = filteredUsers[index];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: user.getRoleColor(),
+                                  child: Text(
+                                    user.name[0].toUpperCase(),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                title: Text(user.name),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(user.email),
+                                    Text(
+                                      user.getRoleName(),
+                                      style: TextStyle(
+                                        color: user.getRoleColor(),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                trailing: isAdmin
+                                    ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit),
+                                            onPressed: () =>
+                                                _showEditUserDialog(user),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete),
+                                            color: Colors.red,
+                                            onPressed: () =>
+                                                _showDeleteConfirmDialog(user),
+                                          ),
+                                        ],
+                                      )
+                                    : null,
+                              );
+                            },
                           ),
-                          backgroundColor: user.getRoleColor(),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _showEditUserDialog(user),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _showDeleteConfirmDialog(user),
-                        ),
-                      ],
-                    ),
-                    children: [_buildUserDetails(user)],
-                  ),
-                );
-              },
-            ),
           ),
         ],
       ),
     );
   }
-
 }
