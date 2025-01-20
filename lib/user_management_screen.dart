@@ -17,11 +17,299 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   List<User> filteredUsers = [];
   bool isLoading = true;
   String? error;
-
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  String? _selectedRoleForAdd;
+  
   @override
   void initState() {
     super.initState();
     _fetchUsers();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _showAddUserDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Thêm người dùng mới'),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Tên'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập tên';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập email';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Email không hợp lệ';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: 'Mật khẩu'),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập mật khẩu';
+                  }
+                  if (value.length < 6) {
+                    return 'Mật khẩu phải có ít nhất 6 ký tự';
+                  }
+                  return null;
+                },
+              ),
+              DropdownButtonFormField<String>(
+                value: _selectedRoleForAdd,
+                decoration: const InputDecoration(labelText: 'Vai trò'),
+                items: ['admin', 'court_owner', 'staff', 'customer']
+                    .map((role) => DropdownMenuItem(
+                          value: role,
+                          child: Text(User(
+                            id: '',
+                            name: '',
+                            email: '',
+                            role: role,
+                            createdAt: '',
+                          ).getRoleName()),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedRoleForAdd = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Vui lòng chọn vai trò';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                try {
+                  final success = await ApiService.createUser({
+                    'name': _nameController.text,
+                    'email': _emailController.text,
+                    'password': _passwordController.text,
+                    'role': _selectedRoleForAdd,
+                  });
+
+                  if (success) {
+                    Navigator.pop(context);
+                    _fetchUsers();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Thêm người dùng thành công')),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Lỗi: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Thêm'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditUserDialog(User user) {
+    _nameController.text = user.name;
+    _emailController.text = user.email;
+    _selectedRoleForAdd = user.role;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sửa thông tin người dùng'),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Tên'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập tên';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Vui lòng nhập email';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Email không hợp lệ';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Mật khẩu mới (để trống nếu không đổi)',
+                ),
+                obscureText: true,
+              ),
+              DropdownButtonFormField<String>(
+                value: _selectedRoleForAdd,
+                decoration: const InputDecoration(labelText: 'Vai trò'),
+                items: ['admin', 'court_owner', 'staff', 'customer']
+                    .map((role) => DropdownMenuItem(
+                          value: role,
+                          child: Text(User(
+                            id: '',
+                            name: '',
+                            email: '',
+                            role: role,
+                            createdAt: '',
+                          ).getRoleName()),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedRoleForAdd = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Vui lòng chọn vai trò';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                try {
+                  final userData = {
+                    'name': _nameController.text,
+                    'email': _emailController.text,
+                    'role': _selectedRoleForAdd,
+                  };
+
+                  if (_passwordController.text.isNotEmpty) {
+                    userData['password'] = _passwordController.text;
+                  }
+
+                  final success = await ApiService.updateUser(user.id, userData);
+
+                  if (success) {
+                    Navigator.pop(context);
+                    _fetchUsers();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cập nhật thông tin thành công'),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Lỗi: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(User user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: Text('Bạn có chắc muốn xóa người dùng ${user.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () async {
+              try {
+                final success = await ApiService.deleteUser(user.id);
+
+                if (success) {
+                  Navigator.pop(context);
+                  _fetchUsers();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Xóa người dùng thành công')),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Lỗi: $e')),
+                );
+              }
+            },
+            child: const Text(
+              'Xóa',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _fetchUsers() async {
@@ -208,7 +496,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quản lý người dùng'),
-        backgroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _showAddUserDialog,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -277,21 +570,32 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               itemBuilder: (context, index) {
                 final user = filteredUsers[index];
                 return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ExpansionTile(
                     leading: CircleAvatar(
                       child: Text(user.name[0].toUpperCase()),
                     ),
                     title: Text(user.name),
                     subtitle: Text(user.email),
-                    trailing: Chip(
-                      label: Text(
-                        user.getRoleName(),
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                      backgroundColor: user.getRoleColor(),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Chip(
+                          label: Text(
+                            user.getRoleName(),
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                          backgroundColor: user.getRoleColor(),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _showEditUserDialog(user),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _showDeleteConfirmDialog(user),
+                        ),
+                      ],
                     ),
                     children: [_buildUserDetails(user)],
                   ),
@@ -304,9 +608,4 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
 }

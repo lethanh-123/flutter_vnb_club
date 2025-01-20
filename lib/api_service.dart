@@ -357,4 +357,51 @@ class ApiService {
       throw Exception('Error fetching users: $e');
     }
   }
+
+  static Future<bool> createUser(Map<String, dynamic> userData) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/create_user.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(userData),
+      );
+
+      final data = json.decode(response.body);
+      return data['success'] == true;
+    } catch (e) {
+      throw Exception('Error creating user: $e');
+    }
+  }
+
+  static Future<bool> updateUser(String userId, Map<String, dynamic> userData) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/update_user.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'id': userId,
+          ...userData,
+        }),
+      );
+
+      final data = json.decode(response.body);
+      return data['success'] == true;
+    } catch (e) {
+      throw Exception('Error updating user: $e');
+    }
+  }
+
+  static Future<bool> deleteUser(String userId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/delete_user.php?id=$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final data = json.decode(response.body);
+      return data['success'] == true;
+    } catch (e) {
+      throw Exception('Error deleting user: $e');
+    }
+  }
 }
