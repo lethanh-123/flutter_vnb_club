@@ -75,9 +75,9 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
         const SizedBox(height: 8),
         Row(
           children: [
-            _buildSportOption('Aussie Footy', Icons.sports_football),
-            _buildSportOption('Bóng chuyền', Icons.sports_volleyball),
-            _buildSportOption('Pickleball', Icons.sports_tennis,
+            _buildSportOption('Cầu lông', Icons.sports_cricket),
+            _buildSportOption('Pickleball', Icons.sports_volleyball),
+            _buildSportOption('Tennis', Icons.sports_tennis,
                 isSelected: true),
           ],
         ),

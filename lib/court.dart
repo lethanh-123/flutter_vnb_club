@@ -27,6 +27,8 @@ class Court {
   final int maxBookingTime;
   final List<SpecialHour> specialHours;
   final List<Booking> todayBookings;
+  final String location;
+  final int sportId;
 
   Court({
     required this.id,
@@ -53,6 +55,8 @@ class Court {
     required this.maxBookingTime,
     required this.specialHours,
     required this.todayBookings,
+    required this.location,
+    required this.sportId
   });
 
   factory Court.fromJson(Map<String, dynamic> json) {
@@ -98,6 +102,8 @@ class Court {
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       address: json['address'] ?? '',
+      location: json['location'],
+      sportId: json['sport_id'],
       latLng: parseLocation(json['location']?.toString()),
       pricePerHour: (json['price_per_hour'] ?? 0).toDouble(),
       type: json['type'] ?? '',

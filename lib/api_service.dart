@@ -339,9 +339,9 @@ class ApiService {
         Uri.parse('$baseUrl/get_users.php'),
         headers: {'Content-Type': 'application/json'},
       );
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print("responsefsdf" + data.toString());
         if (data['success'] == true) {
           final users = (data['data']['users'] as List)
               .map((user) => User.fromJson(user))
@@ -373,7 +373,8 @@ class ApiService {
     }
   }
 
-  static Future<bool> updateUser(String userId, Map<String, dynamic> userData) async {
+  static Future<bool> updateUser(
+      String userId, Map<String, dynamic> userData) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/update_user.php'),
@@ -404,4 +405,31 @@ class ApiService {
       throw Exception('Error deleting user: $e');
     }
   }
+
+  static Future<List<Court>> fetchLocations() async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/get_courts.php'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    final decodedResponse = utf8.decode(response.bodyBytes);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(decodedResponse);
+      if (data['success'] == true) {
+        return (data['data']['courts'] as List)
+            .map((court) => Court.fromJson(court))
+            .toList();
+      } else {
+        throw Exception(data['error'] ?? 'Unknown error');
+      }
+    } else {
+      throw Exception('Failed to load locations');
+    }
+  } catch (e) {
+    print('Error fetching locations: $e');
+    throw Exception('Error fetching locations: $e');
+  }
+}
 }
