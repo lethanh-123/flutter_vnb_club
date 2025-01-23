@@ -58,6 +58,7 @@ dependencies:
   dvhcvn: ^2.1.20250101
   flutter_riverpod: ^2.6.1
   logger: ^2.5.0
+  fl_chart: ^0.70.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -120,6 +121,7 @@ flutter:
     - assets/dupr.jpg
     - assets/default_avatar.jpg
     - assets/tennis.png
+    - assets/court1.jpg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

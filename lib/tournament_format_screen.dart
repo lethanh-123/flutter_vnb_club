@@ -9,21 +9,44 @@ class TournamentFormatScreen extends StatefulWidget {
 }
 
 class _TournamentFormatScreenState extends State<TournamentFormatScreen> {
-  String selectedFormat = 'Vòng tròn';
-  int selectedRounds = 1;
-  String selectedRanking = 'Thắng - Thua';
-  int winPoints = 2;
-  Map<String, int> scores = {
-    'Thắng': 3,
-    'Thua': 0,
-    'Thắng gỡ hòa': 3,
-    'Thua gỡ hòa': 1,
-    'Hòa': 1,
-  };
-  final TextEditingController _rulesController = TextEditingController();
-  final List<TextEditingController> _teamControllers = [];
-  int totalMatches = 28;
+  // String selectedFormat = 'Loại trực tiếp';
+  String selectedRoundType = '1 lượt';
+  bool hasThirdPlace = false;
+  int defaultPoints = 2;
+  int totalMatches = 7;
   int totalTeams = 8;
+  int winPoints = 3;
+  int losePoints = 0;
+  int drawPoints = 1;
+  int drawFirstPriorityPoints = 3;
+  int drawSecondPriorityPoints = 1;
+  String selectedScoringType = 'Thắng - Thua';
+  // int defaultPoints = 2;
+
+  // Thêm biến state cho tab Hỗn hợp
+  String selectedFormat = 'Hỗn hợp';
+  int roundRobinRounds = 1;
+  int groupMatches = 2;
+  int teamsAdvancing = 1;
+  // bool hasThirdPlace = false;
+  bool hasLuckyLoser = false;
+  // String selectedScoringType = 'Thắng - Thua';
+  Map<String, String> selectedPriorities = {
+    'Hiệp gỡ hòa 1': 'H2H Thắng',
+    'Hiệp gỡ hòa 2': 'Hiệu số',
+    'Hiệp gỡ hòa 3': 'H2H Hiệu số',
+    'Hiệp gỡ hòa 4': 'Không có',
+  };
+  // Danh sách các option có thể chọn
+  final List<String> priorityOptions = [
+    'Không có',
+    'H2H Thắng',
+    'Hiệu số',
+    'H2H Hiệu số',
+    'Tổng bàn thắng',
+    'Hiệp đấu thắng',
+    'Thắng %',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -33,270 +56,679 @@ class _TournamentFormatScreenState extends State<TournamentFormatScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('THÊM THỂ THỨC THI ĐẤU'),
+        title: const Text('Thêm thể thức thi đấu'),
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () => Navigator.pop(context),
             child: const Text('Bỏ qua'),
           ),
         ],
       ),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildFormatSelection(),
+            const SizedBox(height: 16),
+            // Hiển thị nội dung tương ứng với format được chọn
+            if (selectedFormat == 'Hỗn hợp')
+              _buildMixedContent()
+            else if (selectedFormat == 'Loại trực tiếp')
+              _buildKnockoutContent()
+            else if (selectedFormat == 'Vòng tròn')
+              _buildRoundRobinContent(),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomBar(),
+    );
+  }
+
+  // Widget cho phần chọn thể thức
+  Widget _buildFormatSelection() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildFormatOption('Hỗn hợp', Icons.shuffle,
+            isSelected: selectedFormat == 'Hỗn hợp'),
+        _buildFormatOption('Loại trực tiếp', Icons.trending_up,
+            isSelected: selectedFormat == 'Loại trực tiếp'),
+        _buildFormatOption('Vòng tròn', Icons.loop,
+            isSelected: selectedFormat == 'Vòng tròn'),
+      ],
+    );
+  }
+
+  // Widget cho nội dung Hỗn hợp
+  Widget _buildMixedContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Phần chọn số lượt
+        _buildRoundSelection(),
+
+        // VÒNG BẢNG
+        const Padding(
+          padding: EdgeInsets.only(top: 24, bottom: 12),
+          child: Text(
+            'VÒNG BẢNG',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'Vòng bảng',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Số bảng và số đội
+        _buildNumberRow('Số bảng đấu', groupMatches),
+        _buildNumberRow('Số đội vào vòng trong', teamsAdvancing),
+
+        // Cách tính xếp hạng
+        _buildScoringSection(),
+
+        // VÒNG LOẠI
+        const Padding(
+          padding: EdgeInsets.only(top: 24, bottom: 12),
+          child: Text(
+            'VÒNG LOẠI',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'Vòng loại',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Tranh hạng 3 và Nhành thua
+        _buildSwitchRow(
+            'Tranh hạng 3',
+            'Thêm trận tranh hạng 3 cho đội chơi thua vòng bán kết.',
+            hasThirdPlace),
+        _buildSwitchRow(
+            'Nhành thua',
+            'Thêm nhành thua cho những đội không được vào vòng đấu loại.',
+            hasLuckyLoser),
+
+        // CÀI ĐẶT KHÁC
+        _buildOtherSettings(),
+      ],
+    );
+  }
+
+  Widget _buildScoringSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 24, bottom: 12),
+          child: Text(
+            'CÁCH TÍNH XẾP HẠNG',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Các nút chọn cách tính điểm
+        Row(
+          children: [
+            _buildScoringOption('Thắng - Thua'),
+            const SizedBox(width: 12),
+            _buildScoringOption('Win %'),
+            const SizedBox(width: 12),
+            _buildScoringOption('Sets Win %'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Điểm được tính theo số bàn thắng, thua, hoặc hòa.',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+
+        // GIÁ TRỊ ĐIỂM
+        const Padding(
+          padding: EdgeInsets.only(top: 16, bottom: 12),
+          child: Text(
+            'GIÁ TRỊ ĐIỂM',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Các dòng điểm
+        _buildPointRow('Thắng', winPoints),
+        _buildPointRow('Thua', losePoints),
+        _buildPointRow('Thắng gỡ hòa', drawFirstPriorityPoints),
+        _buildPointRow('Thua gỡ hòa', drawSecondPriorityPoints),
+        _buildPointRow('Hòa', drawPoints),
+
+        // ƯU TIÊN GỠ HÒA
+        const Padding(
+          padding: EdgeInsets.only(top: 24, bottom: 12),
+          child: Text(
+            'ƯU TIÊN GỠ HÒA',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Các hiệp gỡ hòa
+        _buildDrawPriorityRow('Hiệp gỡ hòa 1', 'H2H Thắng'),
+        _buildDrawPriorityRow('Hiệp gỡ hòa 2', 'Hiệu số'),
+        _buildDrawPriorityRow('Hiệp gỡ hòa 3', 'H2H Hiệu số'),
+        _buildDrawPriorityRow('Hiệp gỡ hòa 4', 'Không có'),
+      ],
+    );
+  }
+
+  Widget _buildScoringOption(String text) {
+    bool isSelected = selectedScoringType == text;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedScoringType = text;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green : Colors.white,
+          border: Border.all(color: isSelected ? Colors.green : Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper widgets được dùng chung
+  Widget _buildRoundSelection() {
+     String getRoundText() {
+    switch (roundRobinRounds) {
+      case 1:
+        return '1 lần';
+      case 2:
+        return '2 lần';
+      case 3:
+        return '3 lần';
+      default:
+        return '1 lần';
+    }
+  }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+          _buildRoundTypeOption('1 lượt',
+              isSelected: roundRobinRounds == 1),
+          const SizedBox(width: 12),
+          _buildRoundTypeOption('2 lượt',
+              isSelected: roundRobinRounds == 2),
+          const SizedBox(width: 12),
+          _buildRoundTypeOption('3 lượt',
+              isSelected: roundRobinRounds == 3),
+        ],
+        ),
+        const SizedBox(height: 8),
+      Text(
+        'Mỗi đội sẽ đấu với các đội còn lại ${getRoundText()} trong vòng bảng, trước khi đi tiếp vào vòng loại.',
+        style: TextStyle(color: Colors.grey[600]),
+      ),
+      TextButton(
+        onPressed: () {},
+        child: const Text(
+          'Tìm hiểu thêm về các thể thức thi đấu',
+          style: TextStyle(color: Colors.blue),
+        ),
+      ),
+    ],
+    );
+  }
+
+  Widget _buildNumberRow(String label, int value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildFormatSection(),
-          const SizedBox(height: 24),
-          _buildDetailsSection(),
-          const SizedBox(height: 24),
-          _buildRankingSection(),
-          const SizedBox(height: 24),
-          _buildTiebreakSection(),
-          const SizedBox(height: 24),
-          _buildRulesSection(),
-          const SizedBox(height: 24),
-          _buildTeamsSection(),
-          const SizedBox(height: 24),
-          _buildSummarySection(),
+          Text(label),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: () {
+                  if (value > 1) {
+                    setState(() {
+                      if (label == 'Số bảng đấu') {
+                        groupMatches--;
+                      } else {
+                        teamsAdvancing--;
+                      }
+                    });
+                  }
+                },
+              ),
+              Text('$value'),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: () {
+                  setState(() {
+                    if (label == 'Số bảng đấu') {
+                      groupMatches++;
+                    } else {
+                      teamsAdvancing++;
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTiebreakSection() {
+  Widget _buildSwitchRow(String title, String subtitle, bool value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'ƯU TIÊN GỠ HÒA',
-          style: TextStyle(
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildTiebreakItem('Hiệp gỡ hòa 1', 'H2H Thắng'),
-        _buildTiebreakItem('Hiệp gỡ hòa 2', 'Hiệu số'),
-        _buildTiebreakItem('Hiệp gỡ hòa 3', 'H2H Hiệu số'),
-        _buildTiebreakItem('Hiệp gỡ hòa 4', 'Không có'),
-      ],
-    );
-  }
-
-  Widget _buildRulesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'LUẬT CHƠI',
-          style: TextStyle(
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _rulesController,
-          decoration: const InputDecoration(
-            hintText:
-                'Ví dụ: Đội/người chơi sẽ bị xử bỏ cuộc nếu không có mặt 10 phút trước khi trận đấu bắt đầu.',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.all(12),
-          ),
-          maxLines: 3,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTeamsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'HIỆP ĐẤU',
-          style: TextStyle(
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...List.generate(2, (index) => _buildTeamInput(index)),
-        TextButton(
-          onPressed: () {
-            setState(() {
-              _teamControllers.add(TextEditingController());
-            });
-          },
-          child: const Text('Thêm hiệp đấu'),
-        ),
-      ],
-    );
-  }
-
-  void _showPreviewDialog() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Text(title),
+            Switch(
+              value: value,
+              onChanged: (newValue) {
+                setState(() {
+                  if (title == 'Tranh hạng 3') {
+                    hasThirdPlace = newValue;
+                  } else {
+                    hasLuckyLoser = newValue;
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+        Text(
+          subtitle,
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildOtherSettings() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 24, bottom: 12),
+          child: Text(
+            'CÀI ĐẶT KHÁC',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        _buildPointRow('Điểm khi đối thủ bỏ cuộc', defaultPoints),
+      ],
+    );
+  }
+
+  // Widget cho nội dung Loại trực tiếp
+  Widget _buildKnockoutContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Phần chọn số lượt
+        Row(
+          children: [
+            _buildRoundTypeOption('1 lượt',
+                isSelected: selectedRoundType == '1 lượt'),
+            const SizedBox(width: 12),
+            _buildRoundTypeOption('2 lượt',
+                isSelected: selectedRoundType == '2 lượt'),
+            const SizedBox(width: 12),
+            _buildRoundTypeOption('Consolation',
+                isSelected: selectedRoundType == 'Consolation'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Mỗi đội sẽ đấu với các đội còn lại 1 lần.',
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+        TextButton(
+          onPressed: () {},
+          child: const Text(
+            'Tìm hiểu thêm về các thể thức thi đấu',
+            style: TextStyle(color: Colors.blue),
+          ),
+        ),
+
+        // Phần CHI TIẾT
+        const Padding(
+          padding: EdgeInsets.only(top: 16, bottom: 12),
+          child: Text(
+            'CHI TIẾT',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Điểm khi đối thủ bỏ cuộc
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Điểm khi đối thủ bỏ cuộc'),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Xem trước ',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.info_outline),
-                      onPressed: () {
-                        // TODO: Show info tooltip
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ],
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: () {
+                    if (defaultPoints > 0) {
+                      setState(() => defaultPoints--);
+                    }
+                  },
                 ),
-                Text(
-                  '1 Lượt Vòng Tròn',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.green[600],
-                    fontWeight: FontWeight.w500,
-                  ),
+                Text('$defaultPoints'),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  onPressed: () {
+                    setState(() => defaultPoints++);
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Được tính dựa trên số người tham gia có thể tham gia giải.',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
+          ],
+        ),
+        Text(
+          'Điểm cộng cho đội chơi nếu đối thủ bỏ cuộc',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+
+        // Tranh hạng 3
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Tranh hạng 3'),
+            Switch(
+              value: hasThirdPlace,
+              onChanged: (value) {
+                setState(() => hasThirdPlace = value);
+              },
+            ),
+          ],
+        ),
+        Text(
+          'Thêm trận tranh hạng 3 cho đội chơi thua vòng bán kết.',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  // Widget cho nội dung Vòng tròn
+  Widget _buildRoundRobinContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Phần chọn số lượt
+        Row(
+          children: [
+            _buildRoundTypeOption('1 lượt', isSelected: roundRobinRounds == 1),
+            const SizedBox(width: 12),
+            _buildRoundTypeOption('2 lượt', isSelected: roundRobinRounds == 2),
+            const SizedBox(width: 12),
+            _buildRoundTypeOption('3 lượt', isSelected: roundRobinRounds == 3),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Mỗi đội sẽ đấu với các đội còn lại $roundRobinRounds lần.',
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+        TextButton(
+          onPressed: () {},
+          child: const Text(
+            'Tìm hiểu thêm về các thể thức thi đấu',
+            style: TextStyle(color: Colors.blue),
+          ),
+        ),
+
+        // CHI TIẾT
+        const Padding(
+          padding: EdgeInsets.only(top: 16, bottom: 12),
+          child: Text(
+            'CHI TIẾT',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Điểm khi đối thủ bỏ cuộc
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Điểm khi đối thủ bỏ cuộc'),
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: () {
+                    if (defaultPoints > 0) {
+                      setState(() => defaultPoints--);
+                    }
+                  },
+                ),
+                Text('$defaultPoints'),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  onPressed: () {
+                    setState(() => defaultPoints++);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        Text(
+          'Điểm cộng cho đội chơi nếu đối thủ bỏ cuộc',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+
+        // CÁCH TÍNH XẾP HẠNG
+        const Padding(
+          padding: EdgeInsets.only(top: 24, bottom: 12),
+          child: Text(
+            'CÁCH TÍNH XẾP HẠNG',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Các nút chọn cách tính điểm
+        Row(
+          children: [
+            _buildScoringOption('Thắng - Thua'),
+            const SizedBox(width: 12),
+            _buildScoringOption('Win %'),
+            const SizedBox(width: 12),
+            _buildScoringOption('Games Win %'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Điểm được tính theo số bàn thắng, thua, hoặc hòa.',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+
+        // GIÁ TRỊ ĐIỂM
+        const Padding(
+          padding: EdgeInsets.only(top: 16, bottom: 12),
+          child: Text(
+            'GIÁ TRỊ ĐIỂM',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Các dòng điểm
+        _buildPointRow('Thắng', winPoints),
+        _buildPointRow('Thua', losePoints),
+        _buildPointRow('Thắng gỡ hòa', drawFirstPriorityPoints),
+        _buildPointRow('Thua gỡ hòa', drawSecondPriorityPoints),
+        _buildPointRow('Hòa', drawPoints),
+
+        // ƯU TIÊN GỠ HÒA
+        const Padding(
+          padding: EdgeInsets.only(top: 24, bottom: 12),
+          child: Text(
+            'ƯU TIÊN GỠ HÒA',
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Các hiệp gỡ hòa
+        _buildDrawPriorityRow('Hiệp gỡ hòa 1', 'H2H Thắng'),
+        _buildDrawPriorityRow('Hiệp gỡ hòa 2', 'Hiệu số'),
+        _buildDrawPriorityRow('Hiệp gỡ hòa 3', 'H2H Hiệu số'),
+        _buildDrawPriorityRow('Hiệp gỡ hòa 4', 'Không có'),
+      ],
+    );
+  }
+
+  Widget _buildPointRow(String label, int points) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: () {
+                  setState(() {
+                    switch (label) {
+                      case 'Thắng':
+                        if (winPoints > 0) winPoints--;
+                        break;
+                      case 'Thua':
+                        if (losePoints > 0) losePoints--;
+                        break;
+                      case 'Hòa':
+                        if (drawPoints > 0) drawPoints--;
+                        break;
+                      case 'Thắng gỡ hòa':
+                        if (drawFirstPriorityPoints > 0)
+                          drawFirstPriorityPoints--;
+                        break;
+                      case 'Thua gỡ hòa':
+                        if (drawSecondPriorityPoints > 0)
+                          drawSecondPriorityPoints--;
+                        break;
+                    }
+                  });
+                },
               ),
-            ),
-            const SizedBox(height: 24),
+              Text('$points'),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: () {
+                  setState(() {
+                    switch (label) {
+                      case 'Thắng':
+                        winPoints++;
+                        break;
+                      case 'Thua':
+                        losePoints++;
+                        break;
+                      case 'Hòa':
+                        drawPoints++;
+                        break;
+                      case 'Thắng gỡ hòa':
+                        drawFirstPriorityPoints++;
+                        break;
+                      case 'Thua gỡ hòa':
+                        drawSecondPriorityPoints++;
+                        break;
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawPriorityRow(String label, String value) {
+    return InkWell(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          builder: (context) => _buildPriorityOptionsSheet(label),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label),
             Row(
               children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '28',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[700],
-                          ),
-                        ),
-                        const Text(
-                          'Tổng\nsố trận',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '8',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[700],
-                          ),
-                        ),
-                        const Text(
-                          'Đội',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                _buildCircleInfo('1', 'Số vòng'),
-                const SizedBox(width: 24),
-                _buildCircleInfo('7', 'Số trận đấu\nmỗi đội'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildCircleInfo('28', 'Số trận đấu\nmỗi vòng'),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(color: Colors.blue),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('Quay lại'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Đóng bottom sheet
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const TournamentDetailScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Xác nhận',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
+                Text(selectedPriorities[label] ?? value),
+                const Icon(Icons.arrow_forward_ios, size: 16),
               ],
             ),
           ],
@@ -305,107 +737,151 @@ class _TournamentFormatScreenState extends State<TournamentFormatScreen> {
     );
   }
 
-  Widget _buildCircleInfo(String number, String label) {
-    return Row(
+  Widget _buildPriorityOptionsSheet(String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 36,
-          height: 36,
+          padding: const EdgeInsets.all(16),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.grey[200],
-            shape: BoxShape.circle,
+            border: Border(
+              bottom: BorderSide(color: Colors.grey[300]!),
+            ),
           ),
-          child: Center(
-            child: Text(
-              number,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13),
+        Expanded(
+          child: ListView.builder(
+            itemCount: priorityOptions.length,
+            itemBuilder: (context, index) {
+              final option = priorityOptions[index];
+              final isSelected = selectedPriorities[label] == option;
+              
+              return ListTile(
+                title: Text(option),
+                trailing: isSelected 
+                  ? const Icon(Icons.check, color: Colors.blue)
+                  : null,
+                onTap: () {
+                  setState(() {
+                    selectedPriorities[label] = option;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            },
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSummarySection() {
-    return Container(
+  // // Helper widgets cho tab Vòng tròn
+  // Widget _buildScoringOption(String text) {
+  //   bool isSelected = selectedScoringType == text;
+  //   return GestureDetector(
+  //     onTap: () {
+  //       setState(() {
+  //         selectedScoringType = text;
+  //       });
+  //     },
+  //     child: Container(
+  //       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //       decoration: BoxDecoration(
+  //         color: isSelected ? Colors.green : Colors.white,
+  //         border: Border.all(color: isSelected ? Colors.green : Colors.grey),
+  //         borderRadius: BorderRadius.circular(8),
+  //       ),
+  //       child: Text(
+  //         text,
+  //         style: TextStyle(
+  //           color: isSelected ? Colors.white : Colors.black,
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // Widget cho bottom bar
+  Widget _buildBottomBar() {
+    return Padding(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'TỔNG',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'TỔNG',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SỐ TRẬN',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SỐ TRẬN',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '$totalMatches',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        Text(
+                          '$totalMatches',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 24),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ĐỘI',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                      ],
+                    ),
+                    const SizedBox(width: 40),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ĐỘI',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '$totalTeams',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        Text(
+                          '$totalTeams',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           ElevatedButton(
-            onPressed: _showPreviewDialog,
+            onPressed: () {
+              // Xử lý khi nhấn Xem trước
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
               ),
             ),
             child: const Text(
@@ -418,355 +894,100 @@ class _TournamentFormatScreenState extends State<TournamentFormatScreen> {
     );
   }
 
+  // Helper widgets
+  // Cập nhật _buildFormatOption để xử lý onTap
   Widget _buildFormatOption(String name, IconData icon,
       {bool isSelected = false}) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.green : Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 24,
-            color: isSelected ? Colors.white : Colors.black,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            name,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoundOption(String text, {bool isSelected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.green : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected ? Colors.green : Colors.grey,
-        ),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.black,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPointsRow(String title, int value) {
-    return Row(
-      children: [
-        Expanded(child: Text(title)),
-        IconButton(
-          icon: const Icon(Icons.remove_circle_outline),
-          onPressed: () {
-            setState(() {
-              if (value > 0) value--;
-            });
-          },
-        ),
-        Text('$value'),
-        IconButton(
-          icon: const Icon(Icons.add_circle_outline),
-          onPressed: () {
-            setState(() {
-              value++;
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildScoreRow(String title, int value) {
-    return Row(
-      children: [
-        Expanded(child: Text(title)),
-        IconButton(
-          icon: const Icon(Icons.remove_circle_outline),
-          onPressed: () {
-            setState(() {
-              if (scores[title]! > 0) {
-                scores[title] = scores[title]! - 1;
-              }
-            });
-          },
-        ),
-        Text('${scores[title]}'),
-        IconButton(
-          icon: const Icon(Icons.add_circle_outline),
-          onPressed: () {
-            setState(() {
-              scores[title] = scores[title]! + 1;
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  void _showTiebreakOptions(String title) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height *
-            0.7, // Giới hạn chiều cao tối đa
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Hiệp gỡ hoà $title',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Flexible(
-              // Wrap ListView bằng Flexible
-              child: ListView(
-                shrinkWrap: true, // Cho phép ListView co lại
-                children: [
-                  'Không có',
-                  'H2H Thắng',
-                  'Hiệu số',
-                  'H2H hiệu số',
-                  'Tổng bàn thắng',
-                  'Hiệp đấu thắng',
-                  'Thắng %',
-                  'Hiệp đấu thắng %'
-                ]
-                    .map((option) => ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(option),
-                          trailing: option == selectedTiebreaks[title]
-                              ? const Icon(Icons.check, color: Colors.blue)
-                              : null,
-                          onTap: () {
-                            setState(() {
-                              selectedTiebreaks[title] = option;
-                            });
-                            Navigator.pop(context);
-                          },
-                        ))
-                    .toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Map<String, String> selectedTiebreaks = {
-    '1': 'H2H Thắng',
-    '2': 'Hiệu số',
-    '3': 'H2H hiệu số',
-    '4': 'Không có',
-  };
-  Widget _buildTiebreakItem(String title, String value) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(title),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(selectedTiebreaks[title] ?? value),
-          const SizedBox(width: 4),
-          Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-        ],
-      ),
-      onTap: () => _showTiebreakOptions(title),
-    );
-  }
-
-  Widget _buildTeamInput(int index) {
-    if (_teamControllers.length <= index) {
-      _teamControllers.add(TextEditingController());
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _teamControllers[index],
-              decoration: const InputDecoration(
-                hintText: 'Tên hiệp đấu',
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: () {
-              setState(() {
-                _teamControllers[index].dispose();
-                _teamControllers.removeAt(index);
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFormatSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            _buildFormatOption('Hỗn hợp', Icons.shuffle, isSelected: false),
-            const SizedBox(width: 12),
-            _buildFormatOption('Loại trực tiếp', Icons.trending_up,
-                isSelected: false),
-            const SizedBox(width: 12),
-            _buildFormatOption('Vòng tròn', Icons.loop, isSelected: true),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            _buildRoundOption('1 lượt', isSelected: true),
-            const SizedBox(width: 12),
-            _buildRoundOption('2 lượt'),
-            const SizedBox(width: 12),
-            _buildRoundOption('3 lượt'),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Mỗi đội sẽ đấu với các đội còn lại 1 lần.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: const Text('Tìm hiểu thêm về các thể thức thi đấu'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'CHI TIẾT',
-          style: TextStyle(
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildPointsRow('Điểm khi đối thủ bỏ cuộc', winPoints),
-        const SizedBox(height: 8),
-        const Text(
-          'Điểm cộng cho đội chơi nếu đối thủ bỏ cuộc',
-          style: TextStyle(color: Colors.grey),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRankingOption(String text, {bool isSelected = false}) {
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedRanking = text;
+          selectedFormat = name;
+          // Reset các giá trị khi chuyển tab nếu cần
+          roundRobinRounds = 1;
+          hasThirdPlace = false;
+          hasLuckyLoser = false;
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        width: 100,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.green : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? Colors.green : Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? Colors.green : Colors.grey,
+            color: isSelected ? Colors.green : Colors.grey[300]!,
           ),
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-            fontSize: 14,
-          ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.black,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              name,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildRankingSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'CÁCH TÍNH XẾP HẠNG',
-          style: TextStyle(
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
+  Widget _buildRoundTypeOption(String text,
+      {bool isSelected = false, String? subtitle}) {
+    return GestureDetector(
+      onTap: () {
+      setState(() {
+        switch (text) {
+          case '1 lượt':
+            roundRobinRounds = 1;
+            break;
+          case '2 lượt':
+            roundRobinRounds = 2;
+            break;
+          case '3 lượt':
+            roundRobinRounds = 3;
+            break;
+        }
+      });
+    },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green : Colors.white,
+          border: Border.all(
+            color: isSelected ? Colors.green : Colors.grey,
           ),
+          borderRadius: BorderRadius.circular(8),
         ),
-        const SizedBox(height: 12),
-        SingleChildScrollView(
-          // Wrap bằng SingleChildScrollView
-          scrollDirection: Axis.horizontal, // Cho phép scroll ngang
-          child: Row(
-            children: [
-              _buildRankingOption('Thắng - Thua', isSelected: true),
-              const SizedBox(width: 12),
-              _buildRankingOption('Win %'),
-              const SizedBox(width: 12),
-              _buildRankingOption('Games Win %'),
-              const SizedBox(width: 12),
-              _buildRankingOption('Games Won'),
-              const SizedBox(width: 12),
-              _buildRankingOption('Tổng bàn thắng'),
-            ],
-          ),
+        child: Column(
+          children: [
+            Text(
+              text,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+              ),
+            ),
+            if (subtitle != null)
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: isSelected ? Colors.white70 : Colors.grey,
+                  fontSize: 10,
+                ),
+              ),
+          ],
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Điểm được tính theo số bàn thắng, thua, hoặc hòa.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        const SizedBox(height: 16),
-        ...scores.entries
-            .map((entry) => _buildScoreRow(entry.key, entry.value)),
-      ],
+      ),
     );
-  }
-
-  @override
-  void dispose() {
-    _rulesController.dispose();
-    for (var controller in _teamControllers) {
-      controller.dispose();
-    }
-    super.dispose();
   }
 }

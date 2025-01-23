@@ -15,7 +15,7 @@ class Court {
   final String? description;
   final String logoUrl;
   final List<String> images;
-  final int rating;
+  final double rating;
   final int totalReviews;
   final List<String> amenities;
   final Map<String, dynamic> openingHours;
@@ -56,16 +56,11 @@ class Court {
     required this.specialHours,
     required this.todayBookings,
     required this.location,
-    required this.sportId
+    required this.sportId,
   });
 
   factory Court.fromJson(Map<String, dynamic> json) {
     // Parse location string "(lat,lng)" to LatLng
-    // final locationStr =
-    //     json['location'].replaceAll('(', '').replaceAll(')', '');
-    // final coords = locationStr.split(',');
-    // final lat = double.parse(coords[0]);
-    // final lng = double.parse(coords[1]);
     LatLng parseLocation(String? locationStr) {
       if (locationStr == null) return const LatLng(0, 0);
       try {
@@ -98,12 +93,31 @@ class Court {
       }
       return [];
     }
+
+    // Parse special hours with null safety
+    List<SpecialHour> parseSpecialHours(dynamic specialHours) {
+      if (specialHours == null) return [];
+      if (specialHours is List) {
+        return specialHours.map((h) => SpecialHour.fromJson(h)).toList();
+      }
+      return [];
+    }
+
+    // Parse today bookings with null safety
+    List<Booking> parseBookings(dynamic bookings) {
+      if (bookings == null) return [];
+      if (bookings is List) {
+        return bookings.map((b) => Booking.fromJson(b)).toList();
+      }
+      return [];
+    }
+
     return Court(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       address: json['address'] ?? '',
-      location: json['location'],
-      sportId: json['sport_id'],
+      location: json['location'] ?? '',
+      sportId: json['sport_id'] ?? 0,
       latLng: parseLocation(json['location']?.toString()),
       pricePerHour: (json['price_per_hour'] ?? 0).toDouble(),
       type: json['type'] ?? '',
@@ -113,7 +127,7 @@ class Court {
       description: json['description'],
       logoUrl: json['logo_url'] ?? '',
       images: parseImages(json['images']),
-      rating: json['rating'] ?? 0,
+      rating: (json['rating'] ?? 0).toDouble(),
       totalReviews: json['total_reviews'] ?? 0,
       amenities: parseAmenities(json['amenities']),
       openingHours: json['opening_hours'] is Map ? json['opening_hours'] : {},
@@ -123,12 +137,8 @@ class Court {
       rules: json['rules'],
       minBookingTime: json['min_booking_time'] ?? 60,
       maxBookingTime: json['max_booking_time'] ?? 180,
-      specialHours: (json['special_hours'] as List)
-          .map((h) => SpecialHour.fromJson(h))
-          .toList(),
-      todayBookings: (json['today_bookings'] as List)
-          .map((b) => Booking.fromJson(b))
-          .toList(),
+      specialHours: parseSpecialHours(json['special_hours']),
+      todayBookings: parseBookings(json['today_bookings']),
     );
   }
 

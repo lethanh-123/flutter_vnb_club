@@ -407,29 +407,73 @@ class ApiService {
   }
 
   static Future<List<Court>> fetchLocations() async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/get_courts.php'),
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_courts.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    final decodedResponse = utf8.decode(response.bodyBytes);
+      final decodedResponse = utf8.decode(response.bodyBytes);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(decodedResponse);
-      if (data['success'] == true) {
-        return (data['data']['courts'] as List)
-            .map((court) => Court.fromJson(court))
-            .toList();
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success'] == true) {
+          return (data['data']['courts'] as List)
+              .map((court) => Court.fromJson(court))
+              .toList();
+        } else {
+          throw Exception(data['error'] ?? 'Unknown error');
+        }
       } else {
-        throw Exception(data['error'] ?? 'Unknown error');
+        throw Exception('Failed to load locations');
       }
-    } else {
-      throw Exception('Failed to load locations');
+    } catch (e) {
+      print('Error fetching locations: $e');
+      throw Exception('Error fetching locations: $e');
     }
-  } catch (e) {
-    print('Error fetching locations: $e');
-    throw Exception('Error fetching locations: $e');
   }
-}
+
+  static Future<Map<String, dynamic>> getCourtStats() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_court_stats.php'),
+        headers: {'Content-Type': 'application/json'},
+      );
+final decodedResponse = utf8.decode(response.bodyBytes);
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success']) {
+          return data['data'];
+        } else {
+          throw Exception(data['error'] ?? 'Lỗi không xác định');
+        }
+      } else {
+        throw Exception('Lỗi kết nối: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Lỗi khi tải dữ liệu: ${e.toString()}');
+    }
+  }
+
+  static Future<Court> getCourtDetail(int courtId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/get_court_detail.php?id=$courtId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      if (response.statusCode == 200) {
+        final data = json.decode(decodedResponse);
+        if (data['success']) {
+          return Court.fromJson(data['data']);
+        } else {
+          throw Exception(data['error'] ?? 'Lỗi không xác định');
+        }
+      } else {
+        throw Exception('Lỗi kết nối: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Lỗi khi tải thông tin sân: ${e.toString()}');
+    }
+  }
 }
