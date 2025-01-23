@@ -1,14 +1,18 @@
 // Thêm các model class
 class DailyStats {
-  final DateTime date;
-  final int totalBookings;
-  final double totalRevenue;
-  final double occupancyRate;
+    final DateTime date;
+    int totalBookings;
+    double totalRevenue;
+    double occupancyRateSum;
+    double occupancyRate;
+    int courtCount;
 
-  DailyStats({
-    required this.date,
-    required this.totalBookings,
-    required this.totalRevenue,
-    required this.occupancyRate,
-  });
-}
+    DailyStats({
+      required this.date,
+      required this.totalBookings,
+      required this.totalRevenue,
+      required this.occupancyRateSum,
+      this.occupancyRate = 0,
+      this.courtCount = 1,
+    });
+  }

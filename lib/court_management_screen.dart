@@ -23,7 +23,9 @@ class CourtManagementScreen extends StatefulWidget {
 
 class _CourtManagementScreenState extends State<CourtManagementScreen> {
   int _selectedIndex = 0;
-  final MapController mapController = MapController();
+  // final MapController mapController = MapController();
+  // Thêm controller cho map
+  late MapController mapController;
   Level1? selectedProvince;
   Level2? selectedDistrict;
   Level3? selectedWard;
@@ -66,6 +68,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   void initState() {
     super.initState();
     _fetchCourts();
+    mapController = MapController();
     _loadStats();
   }
 
@@ -93,14 +96,54 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     }
   }
 
+  // Thêm hàm để tổng hợp dữ liệu theo ngày
+  List<DailyStats> _aggregateByDate(List<dynamic> dailyStatsData) {
+    Map<String, DailyStats> aggregatedData = {};
+    
+    for (var stat in dailyStatsData) {
+      String date = stat['date'];
+      if (aggregatedData.containsKey(date)) {
+        // Ép kiểu và cộng dồn các giá trị trong cùng ngày
+        aggregatedData[date]!.totalBookings += (stat['total_bookings'] as num).toInt();
+        aggregatedData[date]!.totalRevenue += (stat['total_revenue'] as num).toDouble();
+        aggregatedData[date]!.occupancyRateSum += (stat['occupancy_rate'] as num).toDouble();
+        aggregatedData[date]!.courtCount++;
+      } else {
+        // Tạo bản ghi mới cho ngày chưa có
+        aggregatedData[date] = DailyStats(
+          date: DateTime.parse(date),
+          totalBookings: (stat['total_bookings'] as num).toInt(),
+          totalRevenue: (stat['total_revenue'] as num).toDouble(),
+          occupancyRateSum: (stat['occupancy_rate'] as num).toDouble(),
+          courtCount: 1,
+        );
+      }
+    }
+
+    // Chuyển đổi Map thành List và tính trung bình tỷ lệ sử dụng
+    List<DailyStats> result = aggregatedData.values.map((stat) {
+      stat.occupancyRate = stat.occupancyRateSum / stat.courtCount;
+      return stat;
+    }).toList();
+
+    // Sắp xếp theo ngày giảm dần
+    result.sort((a, b) => b.date.compareTo(a.date));
+    
+    // Lấy 7 ngày gần nhất
+    return result.take(7).toList();
+  }
+
+  // Cập nhật hàm _loadStats
   Future<void> _loadStats() async {
     try {
       setState(() => isLoading = true);
-
+      
       final data = await ApiService.getCourtStats();
-
+      
       setState(() {
         statsData = data;
+        // Parse và tổng hợp daily stats
+        dailyStats = _aggregateByDate(data['daily_stats'] as List);
         isLoading = false;
       });
     } catch (e) {
@@ -201,56 +244,35 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   ];
 
   Widget _buildBarChart() {
+    // Lấy 7 ngày gần nhất
+    final recentStats = dailyStats.take(7).toList();
+
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: 250,
+        maxY: recentStats.map((s) => s.totalRevenue).reduce(max) *
+            1.2 /
+            1000000, // Chuyển đổi sang triệu
         titlesData: FlTitlesData(
           show: true,
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
-              interval: 1,
               getTitlesWidget: (value, meta) {
-                // Sử dụng trực tiếp meta được truyền vào
-                const style = TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                );
-                String text;
-                switch (value.toInt()) {
-                  case 0:
-                    text = '17/1';
-                    break;
-                  case 1:
-                    text = '18/1';
-                    break;
-                  case 2:
-                    text = '19/1';
-                    break;
-                  case 3:
-                    text = '20/1';
-                    break;
-                  case 4:
-                    text = '21/1';
-                    break;
-                  case 5:
-                    text = '22/1';
-                    break;
-                  case 6:
-                    text = '23/1';
-                    break;
-                  default:
-                    text = '';
-                    break;
-                }
+                if (value.toInt() >= recentStats.length) return const Text('');
+                final date = recentStats[value.toInt()].date;
                 return SideTitleWidget(
-                  // axisSide: meta.axisSide, // Sử dụng meta.axisSide
+                  meta: meta,
                   space: 8,
-                  child: Text(text, style: style),
-                  meta: meta, // Thêm meta vào đây
+                  child: Text(
+                    '${date.day}/${date.month}',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 );
               },
             ),
@@ -288,12 +310,13 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
             left: BorderSide(color: Colors.grey, width: 1),
           ),
         ),
-        barGroups: revenueData.asMap().entries.map((entry) {
+        barGroups: recentStats.asMap().entries.map((entry) {
           return BarChartGroupData(
             x: entry.key,
             barRods: [
               BarChartRodData(
-                toY: entry.value,
+                toY:
+                    entry.value.totalRevenue / 1000000, // Chuyển đổi sang triệu
                 color: Colors.green,
                 width: 20,
                 borderRadius: const BorderRadius.only(
@@ -463,6 +486,8 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   }
 
   Widget _buildLineChart() {
+    final recentStats = dailyStats.take(7).toList();
+
     return LineChart(
       LineChartData(
         gridData: const FlGridData(
@@ -476,45 +501,20 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
-              interval: 1,
-              getTitlesWidget: (double value, TitleMeta meta) {
-                const style = TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                );
-                String text;
-                switch (value.toInt()) {
-                  case 0:
-                    text = '17/1';
-                    break;
-                  case 1:
-                    text = '18/1';
-                    break;
-                  case 2:
-                    text = '19/1';
-                    break;
-                  case 3:
-                    text = '20/1';
-                    break;
-                  case 4:
-                    text = '21/1';
-                    break;
-                  case 5:
-                    text = '22/1';
-                    break;
-                  case 6:
-                    text = '23/1';
-                    break;
-                  default:
-                    text = '';
-                    break;
-                }
+              getTitlesWidget: (value, meta) {
+                if (value.toInt() >= recentStats.length) return const Text('');
+                final date = recentStats[value.toInt()].date;
                 return SideTitleWidget(
-                  // axisSide: meta.axisSide,
-                  space: 8,
-                  child: Text(text, style: style),
                   meta: meta,
+                  space: 8,
+                  child: Text(
+                    '${date.day}/${date.month}',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 );
               },
             ),
@@ -522,9 +522,8 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              interval: 10,
-              reservedSize: 40,
-              getTitlesWidget: (double value, TitleMeta meta) {
+              interval: 20,
+              getTitlesWidget: (value, meta) {
                 if (value == 0) return const Text('');
                 return Text(
                   '${value.toInt()}%',
@@ -551,28 +550,22 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
           ),
         ),
         minX: 0,
-        maxX: 6,
+        maxX: recentStats.length.toDouble() - 1,
         minY: 0,
         maxY: 100,
         lineBarsData: [
           LineChartBarData(
-            spots: const [
-              FlSpot(0, 2),
-              FlSpot(1, 1),
-              FlSpot(2, 1.5),
-              FlSpot(3, 2),
-              FlSpot(4, 3),
-              FlSpot(5, 30),
-              FlSpot(6, 28),
-            ],
+            spots: recentStats.asMap().entries.map((entry) {
+              return FlSpot(
+                entry.key.toDouble(),
+                entry.value.occupancyRate,
+              );
+            }).toList(),
             isCurved: true,
             color: Colors.green,
             barWidth: 3,
             isStrokeCapRound: true,
-            dotData: const FlDotData(
-              show: true,
-              // getDotPainter: ,
-            ),
+            dotData: const FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
               color: Colors.green.withOpacity(0.1),
@@ -636,6 +629,49 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
                   Colors.purple,
                 ),
               ],
+            ),
+            // Biểu đồ doanh thu
+            Card(
+              margin: const EdgeInsets.symmetric(vertical: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Doanh thu 7 ngày gần nhất',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 300,
+                      child: _buildBarChart(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Biểu đồ tỷ lệ sử dụng
+            Card(
+              margin: const EdgeInsets.symmetric(vertical: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tỷ lệ sử dụng 7 ngày gần nhất',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 300,
+                      child: _buildLineChart(),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             // Top sân bán chạy
@@ -805,64 +841,6 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     );
   }
 
-  // Widget _buildTopCourtsList(List<dynamic> courts) {
-  //   return ListView.builder(
-  //     padding: const EdgeInsets.all(0),
-  //     itemCount: courts.length,
-  //     itemBuilder: (context, index) {
-  //       final court = courts[index];
-  //       return ListTile(
-  //         leading: ClipRRect(
-  //           borderRadius: BorderRadius.circular(8),
-  //           child: Image.network(
-  //             court['image_url'],
-  //             width: 50,
-  //             height: 50,
-  //             fit: BoxFit.cover,
-  //             errorBuilder: (context, error, stackTrace) {
-  //               return Container(
-  //                 width: 50,
-  //                 height: 50,
-  //                 color: Colors.grey[200],
-  //                 child: const Icon(Icons.error),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //         title: Text(
-  //           court['name'],
-  //           style: const TextStyle(fontWeight: FontWeight.bold),
-  //         ),
-  //         subtitle: Row(
-  //           children: [
-  //             Icon(Icons.star, size: 16, color: Colors.amber),
-  //             Text(' ${court['rating']}'),
-  //           ],
-  //         ),
-  //         trailing: Text(
-  //           NumberFormat.currency(
-  //             locale: 'vi_VN',
-  //             symbol: 'đ',
-  //           ).format(court['total_revenue']),
-  //           style: const TextStyle(
-  //             color: Colors.green,
-  //             fontWeight: FontWeight.bold,
-  //           ),
-  //         ),
-  //         onTap: () {
-  //           Navigator.push(
-  //             context,
-  //             MaterialPageRoute(
-  //               builder: (context) =>
-  //                   CourtDetailScreen(courtId: court['court_id']),
-  //             ),
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
-
   Widget _buildFilterChip({
     required IconData icon,
     required String label,
@@ -895,48 +873,88 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   }
 
   void _filterCourtsByLocation() {
-    setState(() {
-      filteredCourts = courts.where((court) {
-        String address = court.address.toLowerCase();
+    if (!isLoading && courts.isNotEmpty) {
+      setState(() {
+        filteredCourts = courts.where((court) {
+          String address = court.address.toLowerCase();
 
-        bool matchProvince = selectedProvince == null ||
-            address.contains(selectedProvince!.name.toLowerCase());
-        bool matchDistrict = selectedDistrict == null ||
-            address.contains(selectedDistrict!.name.toLowerCase());
-        bool matchWard = selectedWard == null ||
-            address.contains(selectedWard!.name.toLowerCase());
+          bool matchProvince = selectedProvince == null ||
+              address.contains(selectedProvince!.name.toLowerCase());
+          bool matchDistrict = selectedDistrict == null ||
+              address.contains(selectedDistrict!.name.toLowerCase());
+          bool matchWard = selectedWard == null ||
+              address.contains(selectedWard!.name.toLowerCase());
 
-        if (selectedWard != null) {
-          return matchProvince && matchDistrict && matchWard;
-        } else if (selectedDistrict != null) {
-          return matchProvince && matchDistrict;
-        } else {
-          return matchProvince;
+          if (selectedWard != null) {
+            return matchProvince && matchDistrict && matchWard;
+          } else if (selectedDistrict != null) {
+            return matchProvince && matchDistrict;
+          } else {
+            return matchProvince;
+          }
+        }).toList();
+
+        // Gọi hàm zoom map ngay sau khi filter
+        if (filteredCourts.isNotEmpty) {
+          _moveMapToFilteredCourts();
         }
-      }).toList();
-
-      _moveMapToFilteredCourts();
-    });
+      });
+    }
   }
 
   void _moveMapToFilteredCourts() {
     if (_selectedIndex == 0 && filteredCourts.isNotEmpty) {
-      if (selectedWard != null) {
-        mapController.move(filteredCourts.first.latLng, 15);
-      } else if (selectedDistrict != null) {
-        mapController.move(filteredCourts.first.latLng, 13);
-      } else if (selectedProvince != null) {
-        mapController.move(filteredCourts.first.latLng, 11);
+      // Tính center point của tất cả các sân được filter
+      double avgLat = 0;
+      double avgLng = 0;
+
+      for (var court in filteredCourts) {
+        avgLat += court.latLng.latitude;
+        avgLng += court.latLng.longitude;
       }
+
+      avgLat /= filteredCourts.length;
+      avgLng /= filteredCourts.length;
+
+      final center = LatLng(avgLat, avgLng);
+
+      // Xác định zoom level dựa trên filter
+      double zoom = 11.0; // Default zoom cho province
+
+      if (selectedWard != null) {
+        zoom = 15.0;
+      } else if (selectedDistrict != null) {
+        zoom = 13.0;
+      }
+
+      // Thêm delay nhỏ để đảm bảo map đã được render
+      Future.delayed(const Duration(milliseconds: 100), () {
+        mapController.move(center, zoom);
+      });
     }
   }
 
   Widget _buildMap() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (filteredCourts.isEmpty) {
+      return const Center(
+        child: Text('Không tìm thấy sân phù hợp'),
+      );
+    }
     return FlutterMap(
       mapController: mapController,
-      options: const MapOptions(
-        initialCenter: _center, // Thay vì center
-        initialZoom: 13, // Thay vì zoom
+      options: MapOptions(
+        initialCenter: _center, // Tọa độ TP.HCM
+        initialZoom: 11,
+        onMapReady: () {
+          // Zoom to filtered courts khi map đã sẵn sàng
+          if (filteredCourts.isNotEmpty) {
+            _moveMapToFilteredCourts();
+          }
+        },
       ),
       children: [
         TileLayer(
@@ -962,6 +980,12 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    mapController.dispose();
+    super.dispose();
   }
 
   Widget _buildListView() {
