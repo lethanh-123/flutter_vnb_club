@@ -31,6 +31,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   Level3? selectedWard;
   List<Court> courts = [];
   List<Court> filteredCourts = [];
+  Set<String> selectedTypes = {};
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = '';
   static const LatLng _center = LatLng(10.7769, 106.7009);
@@ -44,7 +45,8 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   int totalBookings = 95;
   int inventory = 1000164;
   double inventoryValue = 18903091000;
-
+  // Thêm biến để lưu trạng thái filter
+  Set<String> selectedStatuses = {};
   Map<String, dynamic>? statsData;
   List<Map<String, dynamic>> topCourts = [
     {
@@ -82,7 +84,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
       final fetchedCourts = await ApiService.fetchCourts();
       setState(() {
         courts = fetchedCourts;
-        filteredCourts = courts;
+        filteredCourts = fetchedCourts; // Khởi tạo danh sách lọc
         isLoading = false;
       });
     } catch (e) {
@@ -99,14 +101,17 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   // Thêm hàm để tổng hợp dữ liệu theo ngày
   List<DailyStats> _aggregateByDate(List<dynamic> dailyStatsData) {
     Map<String, DailyStats> aggregatedData = {};
-    
+
     for (var stat in dailyStatsData) {
       String date = stat['date'];
       if (aggregatedData.containsKey(date)) {
         // Ép kiểu và cộng dồn các giá trị trong cùng ngày
-        aggregatedData[date]!.totalBookings += (stat['total_bookings'] as num).toInt();
-        aggregatedData[date]!.totalRevenue += (stat['total_revenue'] as num).toDouble();
-        aggregatedData[date]!.occupancyRateSum += (stat['occupancy_rate'] as num).toDouble();
+        aggregatedData[date]!.totalBookings +=
+            (stat['total_bookings'] as num).toInt();
+        aggregatedData[date]!.totalRevenue +=
+            (stat['total_revenue'] as num).toDouble();
+        aggregatedData[date]!.occupancyRateSum +=
+            (stat['occupancy_rate'] as num).toDouble();
         aggregatedData[date]!.courtCount++;
       } else {
         // Tạo bản ghi mới cho ngày chưa có
@@ -128,7 +133,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
 
     // Sắp xếp theo ngày giảm dần
     result.sort((a, b) => b.date.compareTo(a.date));
-    
+
     // Lấy 7 ngày gần nhất
     return result.take(7).toList();
   }
@@ -137,9 +142,9 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   Future<void> _loadStats() async {
     try {
       setState(() => isLoading = true);
-      
+
       final data = await ApiService.getCourtStats();
-      
+
       setState(() {
         statsData = data;
         // Parse và tổng hợp daily stats
@@ -351,7 +356,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tìm sân'),
+        title: const Text('Quản lý sân'),
         backgroundColor: Colors.green,
         actions: [
           if (_selectedIndex != 0)
@@ -457,7 +462,9 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
                 ? _buildMap()
                 : _selectedIndex == 2
                     ? _buildListView()
-                    : _buildOverview(),
+                    : _selectedIndex == 0
+                        ? _buildOverview()
+                        : _buildCourtLayout(),
           ),
         ],
       ),
@@ -465,8 +472,13 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         selectedItemColor: Colors.amber,
-        unselectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white, // Màu icon chưa chọn
+        // unselectedLabelColor: Colors.green, // Thêm màu cho label chưa chọn
         backgroundColor: Colors.green,
+        type: BottomNavigationBarType
+            .fixed, // Thêm để đảm bảo hiển thị đúng với 4 items
+        selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold), // Tùy chọn: làm đậm chữ khi được chọn
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
@@ -479,6 +491,10 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
             label: 'Danh sách',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.grid_view), // Đổi icon cho phù hợp với Sơ đồ sân
+            label: 'Sơ đồ sân',
           ),
         ],
       ),
@@ -1146,6 +1162,244 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
                   ),
                   child: const Text('Xem chi tiết'),
                 ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCourtLayout() {
+    // Lọc sân theo trạng thái đã chọn
+    final displayedCourts = selectedStatuses.isEmpty
+        ? courts
+        : courts
+            .where((court) => selectedStatuses.contains(court.status))
+            .toList();
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Chú thích màu sắc với khả năng filter
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                _buildLegendItem(
+                    'Sân trống', Colors.white, Colors.grey, 'available'),
+                _buildLegendItem(
+                    'Đang sử dụng', Colors.green, null, 'occupied'),
+                _buildLegendItem(
+                    'Sắp có khách', Colors.orange, null, 'reserved'),
+                _buildLegendItem(
+                    'Sắp trả sân', Colors.blue, null, 'checking_out'),
+                _buildLegendItem('Quá giờ', Colors.red, null, 'overdue'),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Grid sân
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1.5,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: displayedCourts.length,
+              itemBuilder: (context, index) {
+                final court = displayedCourts[index];
+                return _buildCourtCard(court);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(
+      String label, Color color, Color? borderColor, String status) {
+    final isSelected = selectedStatuses.contains(status);
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          if (isSelected) {
+            selectedStatuses.remove(status);
+          } else {
+            selectedStatuses.add(status);
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? Colors.blue : (borderColor ?? color),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: color,
+                border: Border.all(
+                  color: borderColor ?? color,
+                  width: 1,
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(label),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCourtCard(Court court) {
+    final schedule = court.currentSchedule;
+
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourtDetailScreen(court: court),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: getStatusColor(court.status), // Đã được định nghĩa ở trên
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              court.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (schedule != null) ...[
+              Text(
+                'Khách: ${schedule.customerName ?? "N/A"}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                '${schedule.startTime} - ${schedule.endTime}',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+            Text(
+              NumberFormat.currency(
+                locale: 'vi_VN',
+                symbol: 'đ',
+                decimalDigits: 0,
+              ).format(court.pricePerHour),
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Hàm getStatusColor đã được định nghĩa ở level class
+  Color getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'available':
+        return Colors.white;
+      case 'occupied':
+        return Colors.green;
+      case 'reserved':
+        return Colors.orange;
+      case 'checking_out':
+        return Colors.blue;
+      case 'overdue':
+        return Colors.red;
+      default:
+        return Colors.white;
+    }
+  }
+
+  String _getRemainingTime(Court court) {
+    // TODO: Implement remaining time calculation
+    return '30:00'; // Placeholder
+  }
+
+  void _showCourtDetails(Court court) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              court.name,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('Loại sân: ${court.type}'),
+            Text('Giá: ${NumberFormat.currency(
+              locale: 'vi_VN',
+              symbol: 'đ',
+              decimalDigits: 0,
+            ).format(court.pricePerHour)}/giờ'),
+            if (court.status != 'available')
+              Text('Thời gian còn lại: ${_getRemainingTime(court)}'),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    // TODO: Implement booking
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
+                  child: const Text('Đặt sân'),
+                ),
+                if (court.status == 'occupied')
+                  ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implement check-out
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
+                    child: const Text('Trả sân'),
+                  ),
               ],
             ),
           ],
