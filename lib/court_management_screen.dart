@@ -66,12 +66,174 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   List<CourtPopularity> topCourtsByRevenue = [];
   List<CourtPopularity> topCourtsByBookings = [];
 
+  // Thêm biến để lưu trạng thái
+  String selectedDateOption = 'Hôm nay';
+  DateTime? startDate;
+  DateTime? endDate;
   @override
   void initState() {
     super.initState();
     _fetchCourts();
     mapController = MapController();
     _loadStats();
+  }
+
+  // Hàm hiển thị bottom sheet chọn ngày
+  void _showDateOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(
+                'Hôm nay',
+                style: TextStyle(
+                  color: selectedDateOption == 'Hôm nay'
+                      ? Colors.green
+                      : Colors.black,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  selectedDateOption = 'Hôm nay';
+                  startDate = DateTime.now();
+                  endDate = DateTime.now();
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text(
+                'Hôm qua',
+                style: TextStyle(
+                  color: selectedDateOption == 'Hôm qua'
+                      ? Colors.green
+                      : Colors.black,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  selectedDateOption = 'Hôm qua';
+                  startDate = DateTime.now().subtract(const Duration(days: 1));
+                  endDate = DateTime.now().subtract(const Duration(days: 1));
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text(
+                '7 ngày qua',
+                style: TextStyle(
+                  color: selectedDateOption == '7 ngày qua'
+                      ? Colors.green
+                      : Colors.black,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  selectedDateOption = '7 ngày qua';
+                  startDate = DateTime.now().subtract(const Duration(days: 7));
+                  endDate = DateTime.now();
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text(
+                'Tháng này',
+                style: TextStyle(
+                  color: selectedDateOption == 'Tháng này'
+                      ? Colors.green
+                      : Colors.black,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  selectedDateOption = 'Tháng này';
+                  startDate =
+                      DateTime(DateTime.now().year, DateTime.now().month, 1);
+                  endDate = DateTime.now();
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text(
+                'Tháng trước',
+                style: TextStyle(
+                  color: selectedDateOption == 'Tháng trước'
+                      ? Colors.green
+                      : Colors.black,
+                ),
+              ),
+              onTap: () {
+                setState(() {
+                  selectedDateOption = 'Tháng trước';
+                  final lastMonth = DateTime.now().month == 1
+                      ? DateTime(DateTime.now().year - 1, 12)
+                      : DateTime(DateTime.now().year, DateTime.now().month - 1);
+                  startDate = DateTime(lastMonth.year, lastMonth.month, 1);
+                  endDate =
+                      DateTime(DateTime.now().year, DateTime.now().month, 0);
+                });
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text(
+                'Tuỳ chọn',
+                style: TextStyle(
+                  color: selectedDateOption == 'Tuỳ chọn'
+                      ? Colors.green
+                      : Colors.black,
+                ),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                final DateTimeRange? picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2024),
+                  lastDate: DateTime(2025),
+                  initialDateRange: DateTimeRange(
+                    start: startDate ?? DateTime.now(),
+                    end: endDate ?? DateTime.now(),
+                  ),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.light(
+                          primary: Colors.green,
+                          onPrimary: Colors.white,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (picked != null) {
+                  setState(() {
+                    selectedDateOption = 'Tuỳ chọn';
+                    startDate = picked.start;
+                    endDate = picked.end;
+                  });
+                }
+              },
+            ),
+            ListTile(
+              title: const Text(
+                'Huỷ bỏ',
+                style: TextStyle(color: Colors.black),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _fetchCourts() async {
@@ -164,18 +326,21 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     }
   }
 
-   void _filterCourts() {
+  void _filterCourts() {
     setState(() {
       filteredCourts = courts.where((court) {
         // Lọc theo tìm kiếm
-        final matchesSearch = court.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-            court.address.toLowerCase().contains(searchQuery.toLowerCase());
+        final matchesSearch =
+            court.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                court.address.toLowerCase().contains(searchQuery.toLowerCase());
 
         // Lọc theo loại sân
-        final matchesType = selectedTypes.isEmpty || selectedTypes.contains(court.type);
+        final matchesType =
+            selectedTypes.isEmpty || selectedTypes.contains(court.type);
 
         // Lọc theo trạng thái
-        final matchesStatus = selectedStatuses.isEmpty || selectedStatuses.contains(court.status.toLowerCase());
+        final matchesStatus = selectedStatuses.isEmpty ||
+            selectedStatuses.contains(court.status.toLowerCase());
 
         return matchesSearch && matchesType && matchesStatus;
       }).toList();
@@ -338,7 +503,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
         title: const Text('Quản lý sân'),
         backgroundColor: Colors.green,
         actions: [
-          if (_selectedIndex != 0)
+          if (_selectedIndex != 0 && _selectedIndex != 4 && _selectedIndex != 5)
             IconButton(
               icon: const Icon(Icons.filter_list),
               onPressed: () async {
@@ -371,7 +536,9 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
       ),
       body: Column(
         children: [
-          if (_selectedIndex != 0) ...[
+          if (_selectedIndex != 0 &&
+              _selectedIndex != 4 &&
+              _selectedIndex != 5) ...[
             // Search bar
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -443,7 +610,13 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
                     ? _buildListView()
                     : _selectedIndex == 0
                         ? _buildOverview()
-                        : _buildCourtLayout(),
+                        : _selectedIndex == 3
+                            ? _buildCourtLayout()
+                            : _selectedIndex == 4
+                                ? _buildInvoiceScreen()
+                                : _selectedIndex == 5
+                                    ? _buildProductServiceScreen()
+                                    : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -452,7 +625,6 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
         onTap: (index) => setState(() => _selectedIndex = index),
         selectedItemColor: Colors.amber,
         unselectedItemColor: Colors.white, // Màu icon chưa chọn
-        // unselectedLabelColor: Colors.green, // Thêm màu cho label chưa chọn
         backgroundColor: Colors.green,
         type: BottomNavigationBarType
             .fixed, // Thêm để đảm bảo hiển thị đúng với 4 items
@@ -475,7 +647,402 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
             icon: Icon(Icons.grid_view), // Đổi icon cho phù hợp với Sơ đồ sân
             label: 'Sơ đồ sân',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: 'Hóa đơn',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory),
+            label: 'SP & DV',
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInvoiceScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false, // Bỏ nút back
+        title: const Text('Hoá đơn'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (context) => DraggableScrollableSheet(
+                  initialChildSize: 0.9,
+                  maxChildSize: 0.9,
+                  minChildSize: 0.5,
+                  expand: false,
+                  builder: (context, scrollController) => SingleChildScrollView(
+                    controller: scrollController,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Tìm kiếm hoá đơn',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  // Xử lý áp dụng filter
+                                  Navigator.pop(context);
+                                },
+                                child: const Text(
+                                  'Áp dụng',
+                                  style: TextStyle(color: Colors.green),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          const Text('Tìm kiếm'),
+                          const SizedBox(height: 8),
+                          TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Mã hoá đơn',
+                              prefixIcon: const Icon(Icons.search),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Theo mã, tên sân',
+                              prefixIcon: const Icon(Icons.search),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // Xử lý mở rộng tìm kiếm
+                            },
+                            child: const Row(
+                              children: const [
+                                Text(
+                                  'Mở rộng',
+                                  style: TextStyle(color: Colors.green),
+                                ),
+                                Icon(Icons.keyboard_arrow_down,
+                                    color: Colors.green),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text('Trạng thái'),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              _buildFilterChip_1('Tất cả', isSelected: true),
+                              _buildFilterChip_1('Hoàn thành'),
+                              _buildFilterChip_1('Đã huỷ'),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          const Text('Phương thức'),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              _buildFilterChip_1('Tất cả', isSelected: true),
+                              _buildFilterChip_1('Tiền mặt'),
+                              _buildFilterChip_1('Chuyển khoản'),
+                              _buildFilterChip_1('Thẻ'),
+                              _buildFilterChip_1('Voucher'),
+                              _buildFilterChip_1('Ví điện tử'),
+                              _buildFilterChip_1('Điểm'),
+                            ],
+                          ),
+                          // Thêm các filter khác
+                          _buildFilterSection('Bảng giá'),
+                          _buildFilterSection('Sân'),
+                          _buildFilterSection('Kênh bán'),
+                          _buildFilterSection('Loại thu khác'),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    // Xử lý bỏ chọn
+                                  },
+                                  child: const Text('Bỏ chọn'),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // Xử lý áp dụng
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                  ),
+                                  child: const Text('Áp dụng'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Date and Branch Selector
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey[100],
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _showDateOptions(context),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today),
+                        const SizedBox(width: 8),
+                        Text(
+                          selectedDateOption,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const Icon(Icons.arrow_drop_down),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      // Handle branch selection
+                    },
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Chi nhánh trung tâm',
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Invoice Summary
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '1 hoá đơn',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                InkWell(
+                  onTap: () {
+                    // Handle total amount tap
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        'Tổng 180,000',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.green,
+                                ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.green),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Invoice List
+          Expanded(
+            child: ListView.builder(
+              itemCount: 1, // Replace with actual invoice count
+              itemBuilder: (context, index) {
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '24/01/2025 09:02',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(
+                              '180,000',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Khách lẻ'),
+                        const SizedBox(height: 4),
+                        Text(
+                          'HD000076',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.grey,
+                                  ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sân 01 cho 2 người',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Hoàn thành',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip_1(String label, {bool isSelected = false}) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (bool selected) {
+        // Xử lý chọn filter
+      },
+      selectedColor: Colors.green,
+      checkmarkColor: Colors.white,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black,
+      ),
+    );
+  }
+
+  Widget _buildFilterSection(String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(title),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () {
+            // Xử lý chọn filter
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text('Tất cả'),
+                Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+// Thêm widget cho tab Sản phẩm & Dịch vụ
+  Widget _buildProductServiceScreen() {
+    return GridView.count(
+      crossAxisCount: 2,
+      padding: const EdgeInsets.all(16),
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      children: [
+        _buildMenuCard('Nhà cung cấp', Icons.business),
+        _buildMenuCard('Nhập hàng', Icons.shopping_cart),
+        _buildMenuCard('Danh mục', Icons.category),
+        _buildMenuCard('Trả hàng nhập', Icons.assignment_return),
+      ],
+    );
+  }
+
+  Widget _buildMenuCard(String title, IconData icon) {
+    return Card(
+      child: InkWell(
+        onTap: () {
+          // Handle menu item tap
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 48, color: Colors.green),
+            const SizedBox(height: 8),
+            Text(title, style: const TextStyle(fontSize: 16)),
+          ],
+        ),
       ),
     );
   }
@@ -843,7 +1410,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     required String type,
   }) {
     final isSelected = selectedTypes.contains(type);
-    
+
     return FilterChip(
       selected: isSelected,
       label: Row(
@@ -1155,46 +1722,50 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   }
 
   Widget _buildCourtLayout() {
-  return SingleChildScrollView(
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Chú thích trạng thái với khả năng lọc
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _buildLegendItem('Sân trống', Colors.white, Colors.grey, 'available'),
-              _buildLegendItem('Đang sử dụng', Colors.green, null, 'occupied'),
-              _buildLegendItem('Sắp có khách', Colors.orange, null, 'reserved'),
-              _buildLegendItem('Sắp trả sân', Colors.blue, null, 'checking_out'),
-              _buildLegendItem('Quá giờ', Colors.red, null, 'overdue'),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Grid sân đã lọc
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1.5,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Chú thích trạng thái với khả năng lọc
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                _buildLegendItem(
+                    'Sân trống', Colors.white, Colors.grey, 'available'),
+                _buildLegendItem(
+                    'Đang sử dụng', Colors.green, null, 'occupied'),
+                _buildLegendItem(
+                    'Sắp có khách', Colors.orange, null, 'reserved'),
+                _buildLegendItem(
+                    'Sắp trả sân', Colors.blue, null, 'checking_out'),
+                _buildLegendItem('Quá giờ', Colors.red, null, 'overdue'),
+              ],
             ),
-            itemCount: filteredCourts.length,
-            itemBuilder: (context, index) {
-              return _buildCourtCard(filteredCourts[index]);
-            },
-          ),
-        ],
+            const SizedBox(height: 24),
+
+            // Grid sân đã lọc
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1.5,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: filteredCourts.length,
+              itemBuilder: (context, index) {
+                return _buildCourtCard(filteredCourts[index]);
+              },
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildLegendItem(
       String label, Color color, Color? borderColor, String status) {
@@ -1380,5 +1951,4 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
       ),
     );
   }
-
 }
