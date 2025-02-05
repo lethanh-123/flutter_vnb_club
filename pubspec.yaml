@@ -58,7 +58,7 @@ dependencies:
   dvhcvn: ^2.1.20250101
   flutter_riverpod: ^2.6.1
   logger: ^2.5.0
-  fl_chart: ^0.70.2
+  fl_chart: ^0.69.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -7,12 +7,15 @@ import 'filter_court_screen.dart';
 import 'court_detail_screen.dart';
 import 'court.dart';
 import 'api_service.dart';
-import 'package:fl_chart/fl_chart.dart';
+// import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 import 'daily_stat.dart';
 import 'court_popularity.dart';
 import 'court_service.dart';
+import 'add_supplier.dart';
+import 'supplier_detail.dart';
+import 'supplier.dart';
 
 class CourtManagementScreen extends StatefulWidget {
   const CourtManagementScreen({Key? key}) : super(key: key);
@@ -25,6 +28,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   int _selectedIndex = 0;
   // final MapController mapController = MapController();
   // Thêm controller cho map
+  bool _showSupplierScreen = false;
   late MapController mapController;
   Level1? selectedProvince;
   Level2? selectedDistrict;
@@ -392,93 +396,93 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     180, // 22
   ];
 
-  Widget _buildBarChart() {
-    // Lấy 7 ngày gần nhất
-    final recentStats = dailyStats.take(7).toList();
+  // Widget _buildBarChart() {
+  // Lấy 7 ngày gần nhất
+  //   final recentStats = dailyStats.take(7).toList();
 
-    return BarChart(
-      BarChartData(
-        alignment: BarChartAlignment.spaceAround,
-        maxY: recentStats.map((s) => s.totalRevenue).reduce(max) *
-            1.2 /
-            1000000, // Chuyển đổi sang triệu
-        titlesData: FlTitlesData(
-          show: true,
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              getTitlesWidget: (value, meta) {
-                if (value.toInt() >= recentStats.length) return const Text('');
-                final date = recentStats[value.toInt()].date;
-                return SideTitleWidget(
-                  meta: meta,
-                  space: 8,
-                  child: Text(
-                    '${date.day}/${date.month}',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                if (value == 0) return const Text('');
-                return Text('${value.toInt()}Tr',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 10,
-                    ));
-              },
-              reservedSize: 40,
-            ),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-        ),
-        gridData: const FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 50,
-        ),
-        borderData: FlBorderData(
-          show: true,
-          border: const Border(
-            bottom: BorderSide(color: Colors.grey, width: 1),
-            left: BorderSide(color: Colors.grey, width: 1),
-          ),
-        ),
-        barGroups: recentStats.asMap().entries.map((entry) {
-          return BarChartGroupData(
-            x: entry.key,
-            barRods: [
-              BarChartRodData(
-                toY:
-                    entry.value.totalRevenue / 1000000, // Chuyển đổi sang triệu
-                color: Colors.green,
-                width: 20,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4),
-                  topRight: Radius.circular(4),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
+  //   return BarChart(
+  //     BarChartData(
+  //       alignment: BarChartAlignment.spaceAround,
+  //       maxY: recentStats.map((s) => s.totalRevenue).reduce(max) *
+  //           1.2 /
+  //           1000000, // Chuyển đổi sang triệu
+  //       titlesData: FlTitlesData(
+  //         show: true,
+  //         bottomTitles: AxisTitles(
+  //           sideTitles: SideTitles(
+  //             showTitles: true,
+  //             reservedSize: 30,
+  //             getTitlesWidget: (value, meta) {
+  //               if (value.toInt() >= recentStats.length) return const Text('');
+  //               final date = recentStats[value.toInt()].date;
+  //               return SideTitleWidget(
+  //                 meta: meta,
+  //                 space: 8,
+  //                 child: Text(
+  //                   '${date.day}/${date.month}',
+  //                   style: const TextStyle(
+  //                     color: Colors.grey,
+  //                     fontWeight: FontWeight.bold,
+  //                     fontSize: 12,
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         leftTitles: AxisTitles(
+  //           sideTitles: SideTitles(
+  //             showTitles: true,
+  //             getTitlesWidget: (value, meta) {
+  //               if (value == 0) return const Text('');
+  //               return Text('${value.toInt()}Tr',
+  //                   style: const TextStyle(
+  //                     color: Colors.grey,
+  //                     fontSize: 10,
+  //                   ));
+  //             },
+  //             reservedSize: 40,
+  //           ),
+  //         ),
+  //         topTitles: const AxisTitles(
+  //           sideTitles: SideTitles(showTitles: false),
+  //         ),
+  //         rightTitles: const AxisTitles(
+  //           sideTitles: SideTitles(showTitles: false),
+  //         ),
+  //       ),
+  //       gridData: const FlGridData(
+  //         show: true,
+  //         drawVerticalLine: false,
+  //         horizontalInterval: 50,
+  //       ),
+  //       borderData: FlBorderData(
+  //         show: true,
+  //         border: const Border(
+  //           bottom: BorderSide(color: Colors.grey, width: 1),
+  //           left: BorderSide(color: Colors.grey, width: 1),
+  //         ),
+  //       ),
+  //       barGroups: recentStats.asMap().entries.map((entry) {
+  //         return BarChartGroupData(
+  //           x: entry.key,
+  //           barRods: [
+  //             BarChartRodData(
+  //               toY:
+  //                   entry.value.totalRevenue / 1000000, // Chuyển đổi sang triệu
+  //               color: Colors.green,
+  //               width: 20,
+  //               borderRadius: const BorderRadius.only(
+  //                 topLeft: Radius.circular(4),
+  //                 topRight: Radius.circular(4),
+  //               ),
+  //             ),
+  //           ],
+  //         );
+  //       }).toList(),
+  //     ),
+  //   );
+  // }
 
   // Cập nhật phần xử lý kết quả từ FilterCourtScreen
   void _handleFilterResult(Map<String, dynamic>? result) {
@@ -498,166 +502,172 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quản lý sân'),
-        backgroundColor: Colors.green,
-        actions: [
-          if (_selectedIndex != 0 && _selectedIndex != 4 && _selectedIndex != 5)
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: () async {
-                final result = await Navigator.push<Map<String, dynamic>>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FilterCourtScreen(
-                      selectedTypes: selectedCourtTypes,
-                      selectedProvince: selectedProvince,
-                      selectedDistrict: selectedDistrict,
-                      selectedWard: selectedWard,
+    return _showSupplierScreen
+        ? buildSupplierScreen()
+        : Scaffold(
+            appBar: AppBar(
+              title: const Text('Quản lý sân'),
+              backgroundColor: Colors.green,
+              actions: [
+                if (_selectedIndex != 0 &&
+                    _selectedIndex != 4 &&
+                    _selectedIndex != 5)
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () async {
+                      final result = await Navigator.push<Map<String, dynamic>>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FilterCourtScreen(
+                            selectedTypes: selectedCourtTypes,
+                            selectedProvince: selectedProvince,
+                            selectedDistrict: selectedDistrict,
+                            selectedWard: selectedWard,
+                          ),
+                        ),
+                      );
+
+                      if (result != null) {
+                        setState(() {
+                          selectedCourtTypes =
+                              (result['types'] as Set<String>?) ?? {};
+                          selectedProvince = result['province'] as Level1?;
+                          selectedDistrict = result['district'] as Level2?;
+                          selectedWard = result['ward'] as Level3?;
+                          _filterCourts();
+                        });
+                      }
+                      _handleFilterResult(result);
+                    },
+                  ),
+              ],
+            ),
+            body: Column(
+              children: [
+                if (_selectedIndex != 0 &&
+                    _selectedIndex != 4 &&
+                    _selectedIndex != 5) ...[
+                  // Search bar
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Tìm kiếm sân...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        suffixIcon: searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                    searchQuery = '';
+                                    _filterCourts();
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                          _filterCourts();
+                        });
+                      },
                     ),
                   ),
-                );
 
-                if (result != null) {
-                  setState(() {
-                    selectedCourtTypes =
-                        (result['types'] as Set<String>?) ?? {};
-                    selectedProvince = result['province'] as Level1?;
-                    selectedDistrict = result['district'] as Level2?;
-                    selectedWard = result['ward'] as Level3?;
-                    _filterCourts();
-                  });
-                }
-                _handleFilterResult(result);
-              },
-            ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (_selectedIndex != 0 &&
-              _selectedIndex != 4 &&
-              _selectedIndex != 5) ...[
-            // Search bar
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Tìm kiếm sân...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  suffixIcon: searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                              searchQuery = '';
-                              _filterCourts();
-                            });
-                          },
-                        )
-                      : null,
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                    _filterCourts();
-                  });
-                },
-              ),
-            ),
-
-            // Court type filters
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _buildFilterChip(
-                    icon: Icons.sports_tennis,
-                    label: 'Pickleball',
-                    color: Colors.blue,
-                    type: 'pickleball',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    icon: Icons.sports_handball,
-                    label: 'Cầu lông',
-                    color: Colors.green,
-                    type: 'badminton',
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    icon: Icons.sports_baseball,
-                    label: 'Tennis',
-                    color: Colors.red,
-                    type: 'tennis',
+                  // Court type filters
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        _buildFilterChip(
+                          icon: Icons.sports_tennis,
+                          label: 'Pickleball',
+                          color: Colors.blue,
+                          type: 'pickleball',
+                        ),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(
+                          icon: Icons.sports_handball,
+                          label: 'Cầu lông',
+                          color: Colors.green,
+                          type: 'badminton',
+                        ),
+                        const SizedBox(width: 8),
+                        _buildFilterChip(
+                          icon: Icons.sports_baseball,
+                          label: 'Tennis',
+                          color: Colors.red,
+                          type: 'tennis',
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-              ),
+                // Main content
+                Expanded(
+                  child: _selectedIndex == 1
+                      ? _buildMap()
+                      : _selectedIndex == 2
+                          ? _buildListView()
+                          : _selectedIndex == 0
+                              ? _buildOverview()
+                              : _selectedIndex == 3
+                                  ? _buildCourtLayout()
+                                  : _selectedIndex == 4
+                                      ? _buildInvoiceScreen()
+                                      : _selectedIndex == 5
+                                          ? _buildProductServiceScreen()
+                                          : const SizedBox.shrink(),
+                ),
+              ],
             ),
-          ],
-          // Main content
-          Expanded(
-            child: _selectedIndex == 1
-                ? _buildMap()
-                : _selectedIndex == 2
-                    ? _buildListView()
-                    : _selectedIndex == 0
-                        ? _buildOverview()
-                        : _selectedIndex == 3
-                            ? _buildCourtLayout()
-                            : _selectedIndex == 4
-                                ? _buildInvoiceScreen()
-                                : _selectedIndex == 5
-                                    ? _buildProductServiceScreen()
-                                    : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        selectedItemColor: Colors.amber,
-        unselectedItemColor: Colors.white, // Màu icon chưa chọn
-        backgroundColor: Colors.green,
-        type: BottomNavigationBarType
-            .fixed, // Thêm để đảm bảo hiển thị đúng với 4 items
-        selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.bold), // Tùy chọn: làm đậm chữ khi được chọn
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Tổng quan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map),
-            label: 'Bản đồ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Danh sách',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view), // Đổi icon cho phù hợp với Sơ đồ sân
-            label: 'Sơ đồ sân',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Hóa đơn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory),
-            label: 'SP & DV',
-          ),
-        ],
-      ),
-    );
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) => setState(() => _selectedIndex = index),
+              selectedItemColor: Colors.amber,
+              unselectedItemColor: Colors.white, // Màu icon chưa chọn
+              backgroundColor: Colors.green,
+              type: BottomNavigationBarType
+                  .fixed, // Thêm để đảm bảo hiển thị đúng với 4 items
+              selectedLabelStyle: const TextStyle(
+                  fontWeight:
+                      FontWeight.bold), // Tùy chọn: làm đậm chữ khi được chọn
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard),
+                  label: 'Tổng quan',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.map),
+                  label: 'Bản đồ',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.list),
+                  label: 'Danh sách',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(
+                      Icons.grid_view), // Đổi icon cho phù hợp với Sơ đồ sân
+                  label: 'Sơ đồ sân',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long),
+                  label: 'Hóa đơn',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.inventory),
+                  label: 'SP & DV',
+                ),
+              ],
+            ),
+          );
   }
 
   Widget _buildInvoiceScreen() {
@@ -1029,11 +1039,191 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     );
   }
 
+  Widget buildSupplierScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Nhà cung cấp'),
+        backgroundColor: Colors.orange,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              _showSupplierScreen = false;
+            });
+          },
+        ),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: 10, // Giả sử 10 nhà cung cấp
+        itemBuilder: (context, index) {
+          return Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            child: ListTile(
+              leading: Icon(Icons.business, color: Colors.orange),
+              title: Text('Nhà cung cấp ${index + 1}'),
+              subtitle: Text('Mã số: 00${index + 1} | Điện thoại: 0123456789'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Supplier selectedSupplier = Supplier(
+                  name: 'Nhà cung cấp ${index + 1}',
+                  code: '00${index + 1}',
+                  phone: '0123456789',
+                );
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        SupplierDetailScreen(supplier: selectedSupplier),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddSupplierScreen()),
+          );
+        },
+        backgroundColor: Colors.orange,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget buildImportScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Nhập hàng'),
+        backgroundColor: Colors.blue,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Tên sản phẩm',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Số lượng',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Giá nhập',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                // Lưu thông tin nhập hàng
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: const Text('Lưu đơn nhập hàng'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildCategoryScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Danh mục'),
+        backgroundColor: Colors.green,
+      ),
+      body: GridView.count(
+        crossAxisCount: 2,
+        padding: const EdgeInsets.all(8),
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        children: List.generate(6, (index) {
+          return Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.category, size: 40, color: Colors.green),
+                  const SizedBox(height: 8),
+                  Text('Danh mục ${index + 1}'),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Thêm danh mục mới
+        },
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget buildReturnProductScreen() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Trả hàng nhập'),
+        backgroundColor: Colors.red,
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: 5, // Giả sử có 5 đơn trả hàng
+        itemBuilder: (context, index) {
+          return Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            child: ListTile(
+              leading: Icon(Icons.assignment_return, color: Colors.red),
+              title: Text('Đơn trả ${index + 1}'),
+              subtitle: Text('Sản phẩm: Vợt Yonex\nLý do: Lỗi kỹ thuật'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Thêm đơn trả hàng
+        },
+        backgroundColor: Colors.red,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
   Widget _buildMenuCard(String title, IconData icon) {
     return Card(
       child: InkWell(
         onTap: () {
-          // Handle menu item tap
+          _navigateToScreen(title);
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1047,96 +1237,122 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     );
   }
 
-  Widget _buildLineChart() {
-    final recentStats = dailyStats.take(7).toList();
+  void _navigateToScreen(String title) {
+    Widget targetScreen;
 
-    return LineChart(
-      LineChartData(
-        gridData: const FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 20,
-        ),
-        titlesData: FlTitlesData(
-          show: true,
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              getTitlesWidget: (value, meta) {
-                if (value.toInt() >= recentStats.length) return const Text('');
-                final date = recentStats[value.toInt()].date;
-                return SideTitleWidget(
-                  meta: meta,
-                  space: 8,
-                  child: Text(
-                    '${date.day}/${date.month}',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: 20,
-              getTitlesWidget: (value, meta) {
-                if (value == 0) return const Text('');
-                return Text(
-                  '${value.toInt()}%',
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 10,
-                  ),
-                );
-              },
-            ),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-        ),
-        borderData: FlBorderData(
-          show: true,
-          border: const Border(
-            bottom: BorderSide(color: Colors.grey, width: 1),
-            left: BorderSide(color: Colors.grey, width: 1),
-          ),
-        ),
-        minX: 0,
-        maxX: recentStats.length.toDouble() - 1,
-        minY: 0,
-        maxY: 100,
-        lineBarsData: [
-          LineChartBarData(
-            spots: recentStats.asMap().entries.map((entry) {
-              return FlSpot(
-                entry.key.toDouble(),
-                entry.value.occupancyRate,
-              );
-            }).toList(),
-            isCurved: true,
-            color: Colors.green,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: true),
-            belowBarData: BarAreaData(
-              show: true,
-              color: Colors.green.withOpacity(0.1),
-            ),
-          ),
-        ],
-      ),
+    switch (title) {
+      case 'Nhà cung cấp':
+        targetScreen = buildSupplierScreen();
+        break;
+      case 'Nhập hàng':
+        targetScreen = buildImportScreen();
+        break;
+      case 'Danh mục':
+        targetScreen = buildCategoryScreen();
+        break;
+      case 'Trả hàng nhập':
+        targetScreen = buildReturnProductScreen();
+        break;
+      default:
+        targetScreen = const SizedBox(); // Màn hình mặc định (nếu cần)
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => targetScreen),
     );
   }
+
+  // Widget _buildLineChart() {
+  //   final recentStats = dailyStats.take(7).toList();
+
+  //   return LineChart(
+  //     LineChartData(
+  //       gridData: const FlGridData(
+  //         show: true,
+  //         drawVerticalLine: false,
+  //         horizontalInterval: 20,
+  //       ),
+  //       titlesData: FlTitlesData(
+  //         show: true,
+  //         bottomTitles: AxisTitles(
+  //           sideTitles: SideTitles(
+  //             showTitles: true,
+  //             reservedSize: 30,
+  //             getTitlesWidget: (value, meta) {
+  //               if (value.toInt() >= recentStats.length) return const Text('');
+  //               final date = recentStats[value.toInt()].date;
+  //               return SideTitleWidget(
+  //                 meta: meta,
+  //                 space: 8,
+  //                 child: Text(
+  //                   '${date.day}/${date.month}',
+  //                   style: const TextStyle(
+  //                     color: Colors.grey,
+  //                     fontWeight: FontWeight.bold,
+  //                     fontSize: 12,
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         leftTitles: AxisTitles(
+  //           sideTitles: SideTitles(
+  //             showTitles: true,
+  //             interval: 20,
+  //             getTitlesWidget: (value, meta) {
+  //               if (value == 0) return const Text('');
+  //               return Text(
+  //                 '${value.toInt()}%',
+  //                 style: const TextStyle(
+  //                   color: Colors.grey,
+  //                   fontSize: 10,
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         ),
+  //         topTitles: const AxisTitles(
+  //           sideTitles: SideTitles(showTitles: false),
+  //         ),
+  //         rightTitles: const AxisTitles(
+  //           sideTitles: SideTitles(showTitles: false),
+  //         ),
+  //       ),
+  //       borderData: FlBorderData(
+  //         show: true,
+  //         border: const Border(
+  //           bottom: BorderSide(color: Colors.grey, width: 1),
+  //           left: BorderSide(color: Colors.grey, width: 1),
+  //         ),
+  //       ),
+  //       minX: 0,
+  //       maxX: recentStats.length.toDouble() - 1,
+  //       minY: 0,
+  //       maxY: 100,
+  //       lineBarsData: [
+  //         LineChartBarData(
+  //           spots: recentStats.asMap().entries.map((entry) {
+  //             return FlSpot(
+  //               entry.key.toDouble(),
+  //               entry.value.occupancyRate,
+  //             );
+  //           }).toList(),
+  //           isCurved: true,
+  //           color: Colors.green,
+  //           barWidth: 3,
+  //           isStrokeCapRound: true,
+  //           dotData: const FlDotData(show: true),
+  //           belowBarData: BarAreaData(
+  //             show: true,
+  //             color: Colors.green.withOpacity(0.1),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildOverview() {
     if (isLoading) {
@@ -1205,10 +1421,10 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
-                    SizedBox(
-                      height: 300,
-                      child: _buildBarChart(),
-                    ),
+                    // SizedBox(
+                    //   height: 300,
+                    //   child: _buildBarChart(),
+                    // ),
                   ],
                 ),
               ),
@@ -1227,10 +1443,10 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
-                    SizedBox(
-                      height: 300,
-                      child: _buildLineChart(),
-                    ),
+                    // SizedBox(
+                    //   height: 300,
+                    //   child: _buildLineChart(),
+                    // ),
                   ],
                 ),
               ),
