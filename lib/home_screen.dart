@@ -40,37 +40,37 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    // _fetchData();
   }
 
-  Future<void> _fetchData() async {
-    if (!mounted) return;
+  // Future<void> _fetchData() async {
+  //   if (!mounted) return;
 
-    try {
-      setState(() {
-        isLoading = true;
-        error = null;
-      });
+  //   try {
+  //     setState(() {
+  //       isLoading = true;
+  //       error = null;
+  //     });
 
-      final result = await ApiService.getMatchesAndTournaments();
+  //     final result = await ApiService.getMatchesAndTournaments();
 
-      if (!mounted) return;
+  //     if (!mounted) return;
 
-      setState(() {
-        matches = (result['matches'] as List).cast<Match>();
-        tournaments = (result['tournaments'] as List).cast<Tournament>();
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
+  //     setState(() {
+  //       matches = (result['matches'] as List).cast<Match>();
+  //       tournaments = (result['tournaments'] as List).cast<Tournament>();
+  //       isLoading = false;
+  //     });
+  //   } catch (e) {
+  //     if (!mounted) return;
 
-      setState(() {
-        error = e.toString();
-        isLoading = false;
-      });
-      print('Error fetching data: $e');
-    }
-  }
+  //     setState(() {
+  //       error = e.toString();
+  //       isLoading = false;
+  //     });
+  //     print('Error fetching data: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -104,9 +104,9 @@ class _HomeScreenState extends State<HomeScreen> {
             HomeContent(
               matches: matches,
               tournaments: tournaments,
-              isLoading: isLoading,
+              isLoading: false,
               error: error,
-              onRefresh: _fetchData,
+              onRefresh: () async {},
             ),
             const ClubJoinScreen(),
             const CommunityScreen(),

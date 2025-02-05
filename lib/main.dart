@@ -9,8 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'welcome_screen.dart';
 import 'auth_sreen.dart';
-import 'ton_kho.dart';
-import 'banhang.dart';
+// import 'ton_kho.dart';
+// import 'banhang.dart';
 import 'invoice_list.dart';
 // import 'settings_screen.dart';
 import 'community_search_screen.dart';
@@ -45,8 +45,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
         '/auth': (context) => const AuthScreen(),
-        '/tonkho': (context) => const TonKhoScreen(),
-        '/banhang': (context) => const BanHangScreen(),
+        // '/tonkho': (context) => const TonKhoScreen(),
+        // '/banhang': (context) => const BanHangScreen(),
         '/invoices': (context) => InvoiceListScreen(),
         // '/cai_dat': (context) => SettingsScreen(),
         '/communitySearch': (context) => const CommunitySearchScreen(),
