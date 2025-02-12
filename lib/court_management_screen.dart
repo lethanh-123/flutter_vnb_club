@@ -168,21 +168,18 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     }
   }
 
-  void _filterCourts() {
+   void _filterCourts() {
     setState(() {
       filteredCourts = courts.where((court) {
         // Lọc theo tìm kiếm
-        final matchesSearch =
-            court.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                court.address.toLowerCase().contains(searchQuery.toLowerCase());
+        final matchesSearch = court.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+            court.address.toLowerCase().contains(searchQuery.toLowerCase());
 
         // Lọc theo loại sân
-        final matchesType =
-            selectedTypes.isEmpty || selectedTypes.contains(court.type);
+        final matchesType = selectedTypes.isEmpty || selectedTypes.contains(court.type);
 
         // Lọc theo trạng thái
-        final matchesStatus = selectedStatuses.isEmpty ||
-            selectedStatuses.contains(court.status.toLowerCase());
+        final matchesStatus = selectedStatuses.isEmpty || selectedStatuses.contains(court.status.toLowerCase());
 
         return matchesSearch && matchesType && matchesStatus;
       }).toList();
@@ -1464,7 +1461,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     required String type,
   }) {
     final isSelected = selectedTypes.contains(type);
-
+    
     return FilterChip(
       selected: isSelected,
       label: Row(
@@ -1776,50 +1773,46 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   }
 
   Widget _buildCourtLayout() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Chú thích trạng thái với khả năng lọc
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _buildLegendItem(
-                    'Sân trống', Colors.white, Colors.grey, 'available'),
-                _buildLegendItem(
-                    'Đang sử dụng', Colors.green, null, 'occupied'),
-                _buildLegendItem(
-                    'Sắp có khách', Colors.orange, null, 'reserved'),
-                _buildLegendItem(
-                    'Sắp trả sân', Colors.blue, null, 'checking_out'),
-                _buildLegendItem('Quá giờ', Colors.red, null, 'overdue'),
-              ],
-            ),
-            const SizedBox(height: 24),
+  return SingleChildScrollView(
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Chú thích trạng thái với khả năng lọc
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _buildLegendItem('Sân trống', Colors.white, Colors.grey, 'available'),
+              _buildLegendItem('Đang sử dụng', Colors.green, null, 'occupied'),
+              _buildLegendItem('Sắp có khách', Colors.orange, null, 'reserved'),
+              _buildLegendItem('Sắp trả sân', Colors.blue, null, 'checking_out'),
+              _buildLegendItem('Quá giờ', Colors.red, null, 'overdue'),
+            ],
+          ),
+          const SizedBox(height: 24),
 
-            // Grid sân đã lọc
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 1.5,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: filteredCourts.length,
-              itemBuilder: (context, index) {
-                return _buildCourtCard(filteredCourts[index]);
-              },
+          // Grid sân đã lọc
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 1.5,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
             ),
-          ],
-        ),
+            itemCount: filteredCourts.length,
+            itemBuilder: (context, index) {
+              return _buildCourtCard(filteredCourts[index]);
+            },
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildLegendItem(
       String label, Color color, Color? borderColor, String status) {
@@ -2005,4 +1998,5 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
       ),
     );
   }
+
 }
