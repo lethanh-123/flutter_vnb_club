@@ -29,7 +29,7 @@ class Court {
   final List<Booking> todayBookings;
   final String location;
   final int sportId;
-  Schedule? currentSchedule;
+
   Court({
     required this.id,
     required this.name,
@@ -57,7 +57,6 @@ class Court {
     required this.todayBookings,
     required this.location,
     required this.sportId,
-    this.currentSchedule,
   });
 
   factory Court.fromJson(Map<String, dynamic> json) {
@@ -113,30 +112,6 @@ class Court {
       return [];
     }
 
-    // Parse currentSchedule từ today_bookings
-        Schedule? parseCurrentSchedule(List<Booking> bookings) {
-      if (bookings.isEmpty) return null;
-      
-      final now = DateTime.now();
-      final currentBooking = bookings.firstWhere(
-        (booking) {
-          final start = DateTime.parse(booking.startTime);
-          final end = DateTime.parse(booking.endTime);
-          return now.isAfter(start) && now.isBefore(end);
-        },
-        orElse: () => null as Booking,
-      );
-
-      if (currentBooking != null) {
-        return Schedule(
-          customerName: currentBooking.customerName, // Bây giờ có thể truy cập customerName
-          startTime: currentBooking.startTime,
-          endTime: currentBooking.endTime,
-        );
-      }
-      return null;
-    }
-    final todayBookings = parseBookings(json['today_bookings']);
     return Court(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
@@ -164,7 +139,6 @@ class Court {
       maxBookingTime: json['max_booking_time'] ?? 180,
       specialHours: parseSpecialHours(json['special_hours']),
       todayBookings: parseBookings(json['today_bookings']),
-      currentSchedule: parseCurrentSchedule(todayBookings),
     );
   }
 
@@ -311,18 +285,6 @@ class SpecialHour {
     final price = basePrice * priceMultiplier;
     return '${price.toStringAsFixed(0)}đ/giờ';
   }
-}
-
-class Schedule {
-  final String? customerName;
-  final String startTime;
-  final String endTime;
-  
-  Schedule({
-    this.customerName,
-    required this.startTime,
-    required this.endTime,
-  });
 }
 
 // class Booking {
