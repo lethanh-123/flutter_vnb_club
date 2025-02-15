@@ -7,6 +7,7 @@ import 'auth_sreen.dart';
 import 'package:flutter/material.dart';
 import 'auth_form.dart';
 import 'home_screen.dart';
+
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
 
@@ -39,7 +40,8 @@ class WelcomeScreen extends StatelessWidget {
             // Button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 backgroundColor: Colors.deepOrange, // Custom button color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
