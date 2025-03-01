@@ -202,7 +202,7 @@ class _HomeContentState extends State<HomeContent> {
             height: 60,
             child: Center(
               child: Text(
-                '${index.toString().padLeft(2, '0')}:00',
+                '${index.toString().padLeft(2, '0')}:01',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[600],

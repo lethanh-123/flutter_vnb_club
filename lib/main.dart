@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'profile_screen.dart';
 import 'providers.dart' as providers;
-
+import 'update_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +18,6 @@ import 'community_search_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-
   runApp(
     ProviderScope(
       overrides: [
@@ -29,8 +28,31 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Kiểm tra update sau khi widget được khởi tạo
+    _checkForUpdates();
+  }
+
+  Future<void> _checkForUpdates() async {
+    // Đợi một chút để đảm bảo context đã sẵn sàng
+    await Future.delayed(const Duration(seconds: 1));
+
+    final updateChecker = AppUpdateChecker();
+    final hasUpdate = await updateChecker.checkForUpdate();
+    if (hasUpdate && mounted) {
+      updateChecker.showUpdateDialog(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

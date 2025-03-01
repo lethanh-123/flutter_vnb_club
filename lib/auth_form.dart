@@ -16,9 +16,12 @@ class AuthForm extends StatefulWidget {
 }
 
 class _AuthFormState extends State<AuthForm> {
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController usernameController =
+      TextEditingController(text: "ltthanh.hvmm@gmail.com");
+  final TextEditingController passwordController =
+      TextEditingController(text: "123456");
   final TextEditingController nameController = TextEditingController();
+
   final FocusNode passwordFocusNode = FocusNode();
   late bool isLogin;
   @override
@@ -42,7 +45,16 @@ class _AuthFormState extends State<AuthForm> {
       ),
     );
   }
+// void login() async {
+//   var url = Uri.parse("https://cosports.appvnb.com/DangNhap");
+//   var response = await http.post(
+//     url,
+//     headers: {"Content-Type": "application/json"},
+//     body: jsonEncode({"email": "lltthanh.hvmm@gmail.com", "password": "123456"}),
+//   );
 
+//   print(response.body);
+// }
   void login() async {
     final email = usernameController.text.trim();
     final password = passwordController.text.trim();
@@ -53,37 +65,43 @@ class _AuthFormState extends State<AuthForm> {
     }
 
     try {
-      final response = await ApiService.callApi('login.php', {
+      final response = await ApiService.callApi('DangNhap', {
         'email': email,
         'password': password,
       });
+      debugPrint("response1213" + response.toString());
+      if (response == null) {
+        showErrorDialog("Không nhận được phản hồi từ máy chủ.");
+        return;
+      }
 
-      if (response != null && response['success'] == true) {
-        // Lưu thông tin user vào SharedPreferences
+      if (response['success'] == true && response.containsKey('data')) {
         final prefs = await SharedPreferences.getInstance();
+        final userData =
+            response['data']['user'] as Map<String, dynamic>? ?? {};
+        final accessToken = response['data']['access_token'] as String? ?? '';
 
-        // Lấy thông tin user từ response
-        final userData = response['data']['user'] as Map<String, dynamic>;
-        final accessToken = response['data']['access_token'] as String;
+        if (userData.isNotEmpty && accessToken.isNotEmpty) {
+          print('Saving user data - ID: ${userData['id']}'); // Debug log
 
-        print('Saving user data - ID: ${userData['id']}'); // Debug log
+          await prefs.setInt('userId', userData['id']);
+          await prefs.setString('userEmail', userData['email'] ?? '');
+          await prefs.setString('userName', userData['name'] ?? '');
+          await prefs.setString('accessToken', accessToken);
+          await prefs.setBool('isLoggedIn', true);
 
-        // Lưu thông tin
-        await prefs.setInt('userId', userData['id']);
-        await prefs.setString('userEmail', userData['email']);
-        await prefs.setString('userName', userData['name']);
-        await prefs.setString('accessToken', accessToken);
-        await prefs.setBool('isLoggedIn', true);
+          if (!mounted) return;
 
-        if (!mounted) return;
-
-        // Chuyển đến màn hình chính
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          showErrorDialog("Dữ liệu phản hồi không hợp lệ.");
+        }
       } else {
-        showErrorDialog("Đăng nhập thất bại");
+        final errorMsg = response['message'] ?? "Đăng nhập thất bại";
+        showErrorDialog(errorMsg);
       }
     } catch (e) {
       print('Login error: $e'); // Debug log
@@ -102,24 +120,24 @@ class _AuthFormState extends State<AuthForm> {
     }
 
     try {
-      final response = await ApiService.callApi('register.php', {
+      final response = await ApiService.callApi('DangKy', {
         'name': name,
         'email': email,
         'password': password,
       });
-      
+
       print('Register response: $response'); // For debugging
 
       // Kiểm tra response không null và success là true
       if (response != null && response['success'] == true) {
         if (!mounted) return;
-        
+
         // Chuyển đến màn hình điều khoản
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const TermsAndPolicyScreen()),
         );
-        
+
         // Chuyển sang chế độ đăng nhập
         setState(() => isLogin = true);
       } else {

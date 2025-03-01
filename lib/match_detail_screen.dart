@@ -15,6 +15,7 @@ class MatchDetailScreen extends StatefulWidget {
   final List<String> notes;
   final int? maxParticipants;
   final int? currentParticipants;
+  final Map<String, dynamic> matchInfo;
 
   const MatchDetailScreen({
     Key? key,
@@ -31,6 +32,7 @@ class MatchDetailScreen extends StatefulWidget {
     required this.notes,
     this.maxParticipants,
     this.currentParticipants,
+    required this.matchInfo,
   }) : super(key: key);
 
   @override
@@ -39,8 +41,26 @@ class MatchDetailScreen extends StatefulWidget {
 
 class _MatchDetailScreenState extends State<MatchDetailScreen> {
   bool isRankingView = false;
+
   @override
   Widget build(BuildContext context) {
+    // Sử dụng matchInfo để cung cấp dữ liệu nếu có
+    final time = widget.matchInfo['time'] ?? widget.time;
+    final date = widget.matchInfo['date'] ?? widget.date;
+    final title = widget.matchInfo['title'] ?? widget.title;
+    final teamName = widget.matchInfo['teamName'] ?? widget.teamName;
+    final teamLogo = widget.matchInfo['teamLogo'] ?? widget.teamLogo;
+    final subtitle = widget.matchInfo['subtitle'] ?? widget.subtitle;
+    final location = widget.matchInfo['location'] ?? widget.location;
+    final fullAddress = widget.matchInfo['fullAddress'] ?? widget.fullAddress;
+    final level = widget.matchInfo['level'] ?? widget.level;
+    final price = widget.matchInfo['price'] ?? widget.price;
+    final notes = widget.matchInfo['notes'] ?? widget.notes;
+    final maxParticipants =
+        widget.matchInfo['maxParticipants'] ?? widget.maxParticipants;
+    final currentParticipants =
+        widget.matchInfo['currentParticipants'] ?? widget.currentParticipants;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,
@@ -52,14 +72,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${widget.time} ${widget.date}',
+              '$time $date',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.8),
                 fontSize: 14,
               ),
             ),
             Text(
-              widget.title,
+              title,
               style: const TextStyle(color: Colors.white, fontSize: 16),
             ),
           ],
@@ -91,9 +111,25 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildDetailsTab(),
-                  _buildParticipantsTab(),
-                  _buildPaymentTab(),
+                  _buildDetailsTab(
+                    teamLogo: teamLogo,
+                    teamName: teamName,
+                    subtitle: subtitle,
+                    currentParticipants: currentParticipants,
+                    maxParticipants: maxParticipants,
+                    date: date,
+                    time: time,
+                    location: location,
+                    fullAddress: fullAddress,
+                    level: level,
+                    price: price,
+                    notes: notes,
+                  ),
+                  _buildParticipantsTab(
+                    currentParticipants: currentParticipants,
+                    maxParticipants: maxParticipants,
+                  ),
+                  _buildPaymentTab(price: price),
                   _buildMatchesTab(),
                 ],
               ),
@@ -101,6 +137,364 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDetailsTab({
+    required String teamLogo,
+    required String teamName,
+    required String subtitle,
+    required int? currentParticipants,
+    required int? maxParticipants,
+    required String date,
+    required String time,
+    required String location,
+    required String fullAddress,
+    required String level,
+    required String price,
+    required List<String> notes,
+  }) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Club info
+          ListTile(
+            leading: CircleAvatar(
+              backgroundImage: AssetImage(teamLogo),
+            ),
+            title: Text(teamName),
+            subtitle: Text(subtitle),
+          ),
+
+          // Participants avatars
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: (currentParticipants ?? 0) + 1,
+              itemBuilder: (context, index) {
+                if (index < (currentParticipants ?? 0)) {
+                  return const Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: CircleAvatar(
+                      backgroundImage: AssetImage('assets/ava.png'),
+                    ),
+                  );
+                } else {
+                  return CircleAvatar(
+                    backgroundColor: Colors.grey[300],
+                    child: Text(
+                        '+${(maxParticipants ?? 0) - (currentParticipants ?? 0)}'),
+                  );
+                }
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Event details
+          _buildDetailItem(
+            Icons.calendar_today,
+            '$date lúc $time',
+            subtitle: '2 tiếng',
+            action: TextButton(
+              onPressed: () {},
+              child: const Text('Thêm vào lịch'),
+            ),
+          ),
+
+          _buildDetailItem(
+            Icons.location_on,
+            location,
+            subtitle: fullAddress,
+            action: TextButton(
+              onPressed: () {},
+              child: const Text('Hiển thị trong bản đồ'),
+            ),
+          ),
+
+          _buildDetailItem(
+            Icons.sports_tennis,
+            level,
+          ),
+
+          _buildDetailItem(
+            Icons.timer_off,
+            'Chặn rời khỏi kèo trước 4 tiếng kèo bắt đầu',
+          ),
+
+          _buildDetailItem(
+            Icons.attach_money,
+            'Mỗi người • $price',
+            action: TextButton(
+              onPressed: () {},
+              child: const Text('Thanh toán'),
+            ),
+          ),
+
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.blue[900],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Row(
+              children: [
+                Text(
+                  'DUPR',
+                  style: TextStyle(color: Colors.white),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Vấn đấu sẽ được gửi đến DUPR',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          const Text(
+            'Ghi chú',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...notes.map((note) => _buildNote(note)).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParticipantsTab({
+    required int? currentParticipants,
+    required int? maxParticipants,
+  }) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // DUPR Manager section
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 1,
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[900],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'DUPR',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Quản lý',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Organizers section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'NGƯỜI TỔ CHỨC • 3',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildOrganizerItem('Tài\nNguyễn', 'assets/pic.png'),
+                    _buildOrganizerItem('Huy', 'assets/pic.png'),
+                    _buildOrganizerItem('Hảobéby', 'assets/pic.png'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Participants section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'XÁC NHẬN THAM GIA • $currentParticipants/$maxParticipants',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildParticipantsList([
+                  'assets/ava.png',
+                  'assets/ava.png',
+                  'assets/ava.png',
+                  'assets/ava.png',
+                ]),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentTab({required String price}) {
+    return Column(
+      children: [
+        // User info section
+        ListTile(
+          leading: const CircleAvatar(
+            backgroundImage: AssetImage('assets/pic.png'),
+          ),
+          title: const Text('Tài Nguyễn'),
+          subtitle: const Text('Thủ quỹ'),
+          trailing: IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () {},
+          ),
+        ),
+
+        // Payment info section
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'PHÍ THAM GIA',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+              Row(
+                children: [
+                  Text(
+                    price,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: price));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã sao chép số tiền')),
+                      );
+                    },
+                    child: const Text('Sao chép'),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              const Text(
+                'TIN NHẮN THANH TOÁN',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+              const Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                        'RECLUB - Huu Thuan VNB - 23/11 - 🏆 Round Robin [DUPR Lv 2.75-3.5] Pick Hub Mix POOC (san 9-10)'),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              // Bank accounts
+              _buildBankAccount(
+                'ACB',
+                'assets/ba.png',
+                'Nguyễn Tấn Tài',
+                '39796666668',
+              ),
+              const Divider(),
+              _buildBankAccount(
+                'MoMo',
+                'assets/ba.png',
+                '0949997739',
+                '0949997739',
+              ),
+            ],
+          ),
+        ),
+
+        const Spacer(),
+        // Bottom button
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Đăng biên lai',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -554,127 +948,6 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     );
   }
 
-  Widget _buildPaymentTab() {
-    return Column(
-      children: [
-        // User info section
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundImage: AssetImage('assets/pic.png'),
-          ),
-          title: const Text('Tài Nguyễn'),
-          subtitle: const Text('Thủ quỹ'),
-          trailing: IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () {},
-          ),
-        ),
-
-        // Payment info section
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'PHÍ THAM GIA',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
-                ),
-              ),
-              Row(
-                children: [
-                  const Text(
-                    '200000 VND',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Clipboard.setData(const ClipboardData(text: '200000'));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Đã sao chép số tiền')),
-                      );
-                    },
-                    child: const Text('Sao chép'),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'TIN NHẮN THANH TOÁN',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
-                ),
-              ),
-              const Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'RECLUB - Huu Thuan VNB - 23/11 - 🏆 Round Robin [DUPR Lv 2.75-3.5] Pick Hub Mix POOC (san 9-10)',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-              // Bank accounts
-              _buildBankAccount(
-                'ACB',
-                'assets/ba.png',
-                'Nguyễn Tấn Tài',
-                '39796666668',
-              ),
-              const Divider(),
-              _buildBankAccount(
-                'MoMo',
-                'assets/ba.png',
-                '0949997739',
-                '0949997739',
-              ),
-            ],
-          ),
-        ),
-
-        const Spacer(),
-        // Bottom button
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Đăng biên lai',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBankAccount(String bankName, String logoPath, String accountName,
       String accountNumber) {
     return ListTile(
@@ -708,232 +981,6 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
             SnackBar(content: Text('Đã sao chép số tài khoản $bankName')),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildDetailsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Club info
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage: AssetImage(widget.teamLogo),
-            ),
-            title: Text(widget.teamName),
-            subtitle: Text(widget.subtitle),
-          ),
-
-          // Participants avatars
-          SizedBox(
-            height: 80,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: (widget.currentParticipants ?? 0) + 1, //
-              itemBuilder: (context, index) {
-                if (index < (widget.currentParticipants ?? 0)) {
-                  return const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: CircleAvatar(
-                      backgroundImage: AssetImage('assets/ava.png'),
-                    ),
-                  );
-                } else {
-                  return CircleAvatar(
-                    backgroundColor: Colors.grey[300],
-                    child: Text(
-                        '+${(widget.maxParticipants ?? 0) - (widget.currentParticipants ?? 0)}'), // Thêm null check
-                  );
-                }
-              },
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Event details
-          _buildDetailItem(
-            Icons.calendar_today,
-            '${widget.date} lúc ${widget.time}',
-            subtitle: '2 tiếng',
-            action: TextButton(
-              onPressed: () {},
-              child: const Text('Thêm vào lịch'),
-            ),
-          ),
-
-          _buildDetailItem(
-            Icons.location_on,
-            widget.location,
-            subtitle: widget.fullAddress,
-            action: TextButton(
-              onPressed: () {},
-              child: const Text('Hiển thị trong bản đồ'),
-            ),
-          ),
-
-          _buildDetailItem(
-            Icons.sports_tennis,
-            widget.level,
-          ),
-
-          _buildDetailItem(
-            Icons.timer_off,
-            'Chặn rời khỏi kèo trước 4 tiếng kèo bắt đầu',
-          ),
-
-          _buildDetailItem(
-            Icons.attach_money,
-            'Mỗi người • ${widget.price}',
-            action: TextButton(
-              onPressed: () {},
-              child: const Text('Thanh toán'),
-            ),
-          ),
-
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.blue[900],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Row(
-              children: [
-                Text(
-                  'DUPR',
-                  style: TextStyle(color: Colors.white),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Vấn đấu sẽ được gửi đến DUPR',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-          const Text(
-            'Ghi chú',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...widget.notes.map((note) => _buildNote(note)).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildParticipantsTab() {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // DUPR Manager section
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 1,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[900],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'DUPR',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Quản lý',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Organizers section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'NGƯỜI TỔ CHỨC • 3',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildOrganizerItem('Tài\nNguyễn', 'assets/pic.png'),
-                    _buildOrganizerItem('Huy', 'assets/pic.png'),
-                    _buildOrganizerItem('Hảobéby', 'assets/pic.png'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Participants section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'XÁC NHẬN THAM GIA • ${widget.currentParticipants}/${widget.maxParticipants}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildParticipantsList([
-                  'assets/ava.png',
-                  'assets/ava.png',
-                  'assets/ava.png',
-                  'assets/ava.png',
-                ]),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

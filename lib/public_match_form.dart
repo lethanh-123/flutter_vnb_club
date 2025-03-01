@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'notificationManager.dart';
 
 class PublicMatchForm extends StatefulWidget {
   const PublicMatchForm({Key? key}) : super(key: key);
@@ -18,6 +19,142 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
   bool allowInvites = true;
   bool sendNotifications = true;
   bool duyetTuDong = true;
+
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
+  String? selectedLocation;
+  bool _hasNewNotification = false; // Thêm biến này
+  bool get isFormValid =>
+      _matchNameController.text.isNotEmpty &&
+      selectedDate != null &&
+      selectedTime != null &&
+      selectedLocation != null;
+
+  final List<Map<String, String>> fakeLocations = [
+    {
+      'name': 'Sân đánh cầu lông Đức Lợi',
+      'address': '111 Lê Đức Thọ, Phường 14, Gò Vấp, Hồ Chí Minh',
+      'hours': '6h – 21:00',
+      'hotline': '028 3894 9642',
+    },
+    {
+      'name': 'Sân đánh cầu lông Khang An',
+      'address': '18A Phan Văn Trị, Phường 10, Gò Vấp, Hồ Chí Minh',
+      'hours': '8h – 21:00',
+      'hotline': '0974 966 874',
+    },
+  ];
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+      _selectTime(context);
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null && picked != selectedTime) {
+      setState(() {
+        selectedTime = picked;
+      });
+    }
+  }
+
+  void _selectLocation(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return ListView(
+          children: fakeLocations.map((location) {
+            return ListTile(
+              title: Text(location['name']!),
+              subtitle: Text(location['address']!),
+              onTap: () {
+                setState(() {
+                  selectedLocation = location['name'];
+                });
+                Navigator.pop(context);
+              },
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  void _showCreatedMatchInfo() {
+    // Tạo thông tin kèo
+    final matchInfo = {
+      'time': selectedTime!.format(context),
+      'date': selectedDate!.toLocal().toString().split(' ')[0],
+      'title': _matchNameController.text,
+      'teamName': 'Team của bạn',
+      'teamLogo': 'assets/your_team.png',
+      'subtitle': 'Kèo giao hữu',
+      'location': selectedLocation!,
+      'fullAddress': 'Địa chỉ đầy đủ của sân',
+      'level': '2.5',
+      'price': 'Miễn phí',
+      'notes': _notesController.text.split('\n'),
+      'maxParticipants': playerCount,
+      'currentParticipants': 0,
+    };
+
+    // Thêm thông báo mới
+    NotificationManager().addNotification({
+      'title': 'Kèo mới đã được tạo',
+      'message': 'Kèo "${_matchNameController.text}" đã được tạo thành công.',
+      'time': 'Vừa xong',
+      'icon': Icons.calendar_today,
+      'iconBackgroundColor': Colors.amber,
+      'matchInfo': matchInfo,
+    });
+
+    // Cập nhật giao diện
+    setState(() {
+      _hasNewNotification = NotificationManager().unreadCount >
+          0; // Cập nhật trạng thái thông báo
+    });
+
+    // Hiển thị thông tin kèo
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Thông tin kèo đã tạo'),
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Tên kèo: ${matchInfo['title']}'),
+              Text('Ngày và giờ: ${matchInfo['date']} ${matchInfo['time']}'),
+              Text('Địa điểm: ${matchInfo['location']}'),
+              Text('Số người chơi: ${matchInfo['maxParticipants']}'),
+              Text('Ghi chú: ${matchInfo['notes']}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Đóng'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,8 +214,7 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
           children: [
             _buildSportOption('Cầu lông', Icons.sports_cricket),
             _buildSportOption('Pickleball', Icons.sports_volleyball),
-            _buildSportOption('Tennis', Icons.sports_tennis,
-                isSelected: true),
+            _buildSportOption('Tennis', Icons.sports_tennis, isSelected: true),
           ],
         ),
         const SizedBox(height: 12),
@@ -105,9 +241,9 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
           leading: const Icon(Icons.people, color: Colors.grey),
           title: const Text('Số người chơi'),
           trailing: Container(
-            width: 100, // Giới hạn chiều rộng cố định
+            width: 100,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end, // Căn phải
+              mainAxisAlignment: MainAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
                 GestureDetector(
@@ -121,7 +257,7 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
                   child: const Icon(Icons.remove_circle_outline, size: 22),
                 ),
                 Container(
-                  width: 30, // Chiều rộng cố định cho số
+                  width: 30,
                   alignment: Alignment.center,
                   child: Text(
                     '$playerCount',
@@ -182,8 +318,12 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.calendar_today),
-          title: const Text('Chọn ngày và giờ'),
-          onTap: () {},
+          title: Text(selectedDate == null
+              ? 'Chọn ngày và giờ'
+              : '${selectedDate!.toLocal()}'.split(' ')[0] +
+                  ' ' +
+                  '${selectedTime!.format(context)}'),
+          onTap: () => _selectDate(context),
         ),
         ListTile(
           contentPadding: EdgeInsets.zero,
@@ -194,8 +334,8 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.location_on),
-          title: const Text('Chọn địa điểm'),
-          onTap: () {},
+          title: Text(selectedLocation ?? 'Chọn địa điểm'),
+          onTap: () => _selectLocation(context),
         ),
       ],
     );
@@ -205,7 +345,7 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: isFormValid ? _showCreatedMatchInfo : null,
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: Colors.blue,
@@ -299,7 +439,7 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
         ),
       ),
       trailing: SizedBox(
-        width: 100, // Giới hạn chiều rộng của trailing widget
+        width: 100,
         child: trailing,
       ),
       onTap: onTap,
@@ -357,6 +497,9 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           ),
+          onChanged: (value) {
+            setState(() {});
+          },
         ),
         const SizedBox(height: 12),
         TextField(

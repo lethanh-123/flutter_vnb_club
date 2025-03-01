@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'notificationManager.dart';
+import 'match_detail_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final notifications = NotificationManager().notifications;
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -34,38 +38,67 @@ class NotificationsScreen extends StatelessWidget {
               ),
             ),
           ),
-          _buildNotificationItem(
-            title:
-                'PICKLEBALL: [PRESET TEAM/2 HOURS] NEWBIE - 2.5 TEAM NGẪU NHIÊN CÓ QUÀ TẶNG ❤️❤️💥💥',
-            message:
-                'Thành Nguyễn 3T is looking for 4 players today at 3T Pickleball Club - Sân trong nhà. Can you join?',
-            time: '2 phút trước',
-            icon: Icons.calendar_today,
-            iconBackgroundColor: Colors.amber,
-          ),
-          _buildNotificationItem(
-            title: 'BIG BALLS PICKLE CLUB',
-            message: "You've been invited to join Big Balls Pickle Club.",
-            time: '7 phút trước',
-            imageUrl: 'assets/pickcelball1.jpg',
-          ),
-          _buildNotificationItem(
-            title: 'PICKLEBALL: BIGBALLS X AP: SOCIAL 3.0 (PRIVATE CLUB)',
-            message:
-                'Kimbap Nguyen is looking for 4 players today at AP Sports Club. Can you join?',
-            time: '8 phút trước',
-            icon: Icons.calendar_today,
-            iconBackgroundColor: Colors.amber,
-          ),
-          _buildNotificationItem(
-            title:
-                'PICKLEBALL: 🎾SOCIAL MEET (ALL LEVEL) 4 SÂN 19H-21H D\'LUCKY 458 NGUYỄN TẤT THÀNH, QUẬN 4',
-            message:
-                'Phương Nguyễn is looking for 24 players today at 458 Đ. Nguyễn Tất Thành. Can you join?',
-            time: '25 phút trước',
-            icon: Icons.calendar_today,
-            iconBackgroundColor: Colors.amber,
-          ),
+          if (notifications.isEmpty)
+            const Center(
+              child: Text('Không có thông báo mới'),
+            ),
+          ...notifications.map((notification) {
+            return GestureDetector(
+              onTap: () {
+                // Điều hướng đến màn hình chi tiết kèo
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MatchDetailScreen(
+                      time: '10:00',
+                      date: '2023-10-10',
+                      title: 'Kèo Pickleball Giao hữu',
+                      teamName: 'Team A',
+                      teamLogo: 'assets/team_a.png',
+                      subtitle: 'Giao hữu với Team B',
+                      location: 'Sân Pickleball Đức Lợi',
+                      fullAddress:
+                          '111 Lê Đức Thọ, Phường 14, Gò Vấp, Hồ Chí Minh',
+                      level: '2.5',
+                      price: '100.000 VNĐ',
+                      notes: [
+                        'Mang theo vợt',
+                        'Đến sớm 15 phút',
+                      ],
+                      maxParticipants: 12,
+                      currentParticipants: 8,
+                      matchInfo: {
+                        'time': '10:00',
+                        'date': '2023-10-10',
+                        'title': 'Kèo Pickleball Giao hữu',
+                        'teamName': 'Team A',
+                        'teamLogo': 'assets/team_a.png',
+                        'subtitle': 'Giao hữu với Team B',
+                        'location': 'Sân Pickleball Đức Lợi',
+                        'fullAddress':
+                            '111 Lê Đức Thọ, Phường 14, Gò Vấp, Hồ Chí Minh',
+                        'level': '2.5',
+                        'price': '100.000 VNĐ',
+                        'notes': [
+                          'Mang theo vợt',
+                          'Đến sớm 15 phút',
+                        ],
+                        'maxParticipants': 12,
+                        'currentParticipants': 8,
+                      },
+                    ),
+                  ),
+                );
+              },
+              child: _buildNotificationItem(
+                title: notification['title'],
+                message: notification['message'],
+                time: notification['time'],
+                icon: notification['icon'],
+                iconBackgroundColor: notification['iconBackgroundColor'],
+              ),
+            );
+          }).toList(),
         ],
       ),
     );

@@ -13,7 +13,7 @@ import 'court.dart';
 import 'user.dart';
 
 class ApiService {
-  static const String baseUrl = "http://192.168.1.10/flutter_vnb_club_be";
+  static const String baseUrl = "https://cosports.appvnb.com";
 
   static Future<Map<String, dynamic>?> callApi(
       String endpoint, Map<String, dynamic> body) async {
@@ -82,7 +82,7 @@ class ApiService {
   static Future<Map<String, List>> getMatchesAndTournaments() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/matches_tournaments.php'),
+        Uri.parse('$baseUrl/matches_tournaments'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json',
@@ -309,7 +309,7 @@ class ApiService {
   static Future<List<Court>> fetchCourts() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/get_courts.php'),
+        Uri.parse('$baseUrl/get_courts'),
         headers: {'Content-Type': 'application/json'},
       );
 

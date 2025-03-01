@@ -1142,10 +1142,16 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
-    final currentStats = statsData?['current_stats'];
-    final topCourts = statsData?['top_courts'];
-
+    final currentStats = statsData?['current_stats'] ?? {};
+    final topCourts = statsData?['top_courts'] ?? {};
+// Kiểm tra nếu statsData hoặc các trường con bị null
+    if (statsData == null ||
+        statsData?['current_stats'] == null ||
+        statsData?['top_courts'] == null) {
+      return const Center(
+        child: Text("Không có dữ liệu thống kê."),
+      );
+    }
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
