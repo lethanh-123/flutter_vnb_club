@@ -3,7 +3,10 @@ import 'court_management_screen.dart';
 import 'user_management_screen.dart';
 
 class ManagementScreen extends StatelessWidget {
-  const ManagementScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic> currentUser;
+
+  const ManagementScreen({Key? key, required this.currentUser})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +26,9 @@ class ManagementScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const CourtManagementScreen(),
+                    builder: (context) => CourtManagementScreen(
+                      currentUser: currentUser,
+                    ),
                   ),
                 );
               },

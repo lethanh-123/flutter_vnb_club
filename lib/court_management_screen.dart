@@ -15,13 +15,18 @@ import 'court_popularity.dart';
 import 'court_service.dart';
 
 class CourtManagementScreen extends StatefulWidget {
-  const CourtManagementScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic> currentUser; // Thêm currentUser vào constructor
+
+  const CourtManagementScreen({Key? key, required this.currentUser})
+      : super(key: key);
 
   @override
   State<CourtManagementScreen> createState() => _CourtManagementScreenState();
 }
 
 class _CourtManagementScreenState extends State<CourtManagementScreen> {
+  bool get isAdmin => widget.currentUser['role'] == 'admin';
+  bool get isCourtOwner => widget.currentUser['role'] == 'court_owner';
   int _selectedIndex = 0;
   // final MapController mapController = MapController();
   // Thêm controller cho map
@@ -503,7 +508,11 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
         title: const Text('Quản lý sân'),
         backgroundColor: Colors.green,
         actions: [
-          if (_selectedIndex != 0 && _selectedIndex != 4 && _selectedIndex != 5)
+          // Hiển thị nút filter chỉ cho admin và court_owner
+          if ((isAdmin || isCourtOwner) &&
+              _selectedIndex != 0 &&
+              _selectedIndex != 4 &&
+              _selectedIndex != 5)
             IconButton(
               icon: const Icon(Icons.filter_list),
               onPressed: () async {
@@ -536,7 +545,9 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
       ),
       body: Column(
         children: [
-          if (_selectedIndex != 0 &&
+          // Hiển thị thanh tìm kiếm và bộ lọc chỉ cho admin và court_owner
+          if ((isAdmin || isCourtOwner) &&
+              _selectedIndex != 0 &&
               _selectedIndex != 4 &&
               _selectedIndex != 5) ...[
             // Search bar
@@ -624,12 +635,9 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         selectedItemColor: Colors.amber,
-        unselectedItemColor: Colors.white, // Màu icon chưa chọn
+        unselectedItemColor: Colors.white,
         backgroundColor: Colors.green,
-        type: BottomNavigationBarType
-            .fixed, // Thêm để đảm bảo hiển thị đúng với 4 items
-        selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.bold), // Tùy chọn: làm đậm chữ khi được chọn
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
@@ -644,7 +652,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
             label: 'Danh sách',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view), // Đổi icon cho phù hợp với Sơ đồ sân
+            icon: Icon(Icons.grid_view),
             label: 'Sơ đồ sân',
           ),
           BottomNavigationBarItem(
@@ -1142,9 +1150,10 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
+
     final currentStats = statsData?['current_stats'] ?? {};
     final topCourts = statsData?['top_courts'] ?? {};
-// Kiểm tra nếu statsData hoặc các trường con bị null
+
     if (statsData == null ||
         statsData?['current_stats'] == null ||
         statsData?['top_courts'] == null) {
@@ -1152,6 +1161,7 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
         child: Text("Không có dữ liệu thống kê."),
       );
     }
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1243,47 +1253,49 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
             ),
 
             // Top sân bán chạy
-            Card(
-              margin: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Top sân bán chạy',
-                      style: Theme.of(context).textTheme.titleLarge,
+            if (isAdmin ||
+                isCourtOwner) // Chỉ hiển thị cho admin và court_owner
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Top sân bán chạy',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
-                  ),
-                  DefaultTabController(
-                    length: 2,
-                    child: Column(
-                      children: [
-                        const TabBar(
-                          labelColor: Colors.green,
-                          unselectedLabelColor: Colors.grey,
-                          tabs: [
-                            Tab(text: 'Theo doanh thu'),
-                            Tab(text: 'Theo số lượng'),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 400,
-                          child: TabBarView(
-                            children: [
-                              _buildTopCourtsListView(
-                                  topCourts?['by_revenue'] ?? []),
-                              _buildTopCourtsListView(
-                                  topCourts?['by_bookings'] ?? []),
+                    DefaultTabController(
+                      length: 2,
+                      child: Column(
+                        children: [
+                          const TabBar(
+                            labelColor: Colors.green,
+                            unselectedLabelColor: Colors.grey,
+                            tabs: [
+                              Tab(text: 'Theo doanh thu'),
+                              Tab(text: 'Theo số lượng'),
                             ],
                           ),
-                        ),
-                      ],
+                          SizedBox(
+                            height: 400,
+                            child: TabBarView(
+                              children: [
+                                _buildTopCourtsListView(
+                                    topCourts?['by_revenue'] ?? []),
+                                _buildTopCourtsListView(
+                                    topCourts?['by_bookings'] ?? []),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1562,16 +1574,31 @@ class _CourtManagementScreenState extends State<CourtManagementScreen> {
   }
 
   Widget _buildListView() {
-    if (filteredCourts.isEmpty) {
+    List<Court> courtsToDisplay = [];
+
+    if (isAdmin) {
+      // Admin xem tất cả sân
+      courtsToDisplay = courts;
+    } else if (isCourtOwner) {
+      // Court owner chỉ xem sân của mình
+      courtsToDisplay = courts
+          .where((court) => court.ownerId == widget.currentUser['id'])
+          .toList();
+    } else {
+      // Các vai trò khác chỉ xem sân đã được lọc
+      courtsToDisplay = filteredCourts;
+    }
+
+    if (courtsToDisplay.isEmpty) {
       return const Center(
         child: Text('Không tìm thấy sân phù hợp'),
       );
     }
 
     return ListView.builder(
-      itemCount: filteredCourts.length,
+      itemCount: courtsToDisplay.length,
       itemBuilder: (context, index) {
-        final court = filteredCourts[index];
+        final court = courtsToDisplay[index];
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: ListTile(

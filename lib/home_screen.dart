@@ -23,7 +23,9 @@ import 'providers.dart';
 import 'notificationManager.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic> currentUser;
+
+  const HomeScreen({Key? key, required this.currentUser}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -250,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const ClubJoinScreen(),
             const CommunityScreen(),
             _buildStatisticsView(),
-            const ManagementScreen(),
+            ManagementScreen(currentUser: widget.currentUser),
           ],
         ),
         bottomNavigationBar: Theme(
@@ -779,7 +781,10 @@ class _TimelineItem extends StatelessWidget {
 }
 
 class ManagementScreen extends StatelessWidget {
-  const ManagementScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic> currentUser;
+
+  const ManagementScreen({Key? key, required this.currentUser})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -799,7 +804,8 @@ class ManagementScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const CourtManagementScreen(),
+                  builder: (context) =>
+                      CourtManagementScreen(currentUser: currentUser),
                 ),
               );
             },

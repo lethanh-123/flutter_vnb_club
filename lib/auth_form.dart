@@ -69,32 +69,43 @@ class _AuthFormState extends State<AuthForm> {
         'email': email,
         'password': password,
       });
-      debugPrint("response1213" + response.toString());
+
+      debugPrint("Response từ API: $response");
+
       if (response == null) {
         showErrorDialog("Không nhận được phản hồi từ máy chủ.");
         return;
       }
 
       if (response['success'] == true && response.containsKey('data')) {
-        final prefs = await SharedPreferences.getInstance();
-        final userData =
-            response['data']['user'] as Map<String, dynamic>? ?? {};
-        final accessToken = response['data']['access_token'] as String? ?? '';
+        final data = response['data'];
+        final Map<String, dynamic> userData = data['user'] ?? {};
+        final String accessToken = data['access_token'] ?? '';
 
         if (userData.isNotEmpty && accessToken.isNotEmpty) {
           print('Saving user data - ID: ${userData['id']}'); // Debug log
 
-          await prefs.setInt('userId', userData['id']);
-          await prefs.setString('userEmail', userData['email'] ?? '');
-          await prefs.setString('userName', userData['name'] ?? '');
-          await prefs.setString('accessToken', accessToken);
-          await prefs.setBool('isLoggedIn', true);
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setInt('userId', userData['id']);
+            await prefs.setString('userEmail', userData['email'] ?? '');
+            await prefs.setString('userName', userData['name'] ?? '');
+            await prefs.setString('accessToken', accessToken);
+            await prefs.setBool('isLoggedIn', true);
+          } catch (e) {
+            print('Lỗi lưu dữ liệu vào SharedPreferences: $e');
+            showErrorDialog("Không thể lưu thông tin đăng nhập.");
+            return;
+          }
 
           if (!mounted) return;
 
+          // ✅ Truyền userData vào HomeScreen
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(currentUser: userData),
+            ),
           );
         } else {
           showErrorDialog("Dữ liệu phản hồi không hợp lệ.");

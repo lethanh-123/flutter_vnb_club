@@ -29,7 +29,9 @@ class Court {
   final List<Booking> todayBookings;
   final String location;
   final int sportId;
+  final int ownerId; // Thêm trường ownerId
   Schedule? currentSchedule;
+
   Court({
     required this.id,
     required this.name,
@@ -57,6 +59,7 @@ class Court {
     required this.todayBookings,
     required this.location,
     required this.sportId,
+    required this.ownerId, // Thêm vào constructor
     this.currentSchedule,
   });
 
@@ -129,8 +132,7 @@ class Court {
 
       if (currentBooking != null) {
         return Schedule(
-          customerName: currentBooking
-              .customerName, // Bây giờ có thể truy cập customerName
+          customerName: currentBooking.customerName,
           startTime: currentBooking.startTime,
           endTime: currentBooking.endTime,
         );
@@ -166,10 +168,10 @@ class Court {
       maxBookingTime: json['max_booking_time'] ?? 180,
       specialHours: parseSpecialHours(json['special_hours']),
       todayBookings: parseBookings(json['today_bookings']),
+      ownerId: json['owner_id'] ?? 0, // Thêm ownerId
       currentSchedule: parseCurrentSchedule(todayBookings),
     );
   }
-
   String getCourtTypeName() {
     switch (type) {
       case 'pickleball':

@@ -336,7 +336,7 @@ class ApiService {
   static Future<List<User>> fetchUsers() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/get_users.php'),
+        Uri.parse('http://192.168.15.1/flutter_vnb_club_be/get_users.php'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
