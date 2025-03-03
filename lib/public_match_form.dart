@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'notificationManager.dart';
+import 'keo_detail.dart';
 
 class PublicMatchForm extends StatefulWidget {
   const PublicMatchForm({Key? key}) : super(key: key);
@@ -124,35 +125,15 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
 
     // Cập nhật giao diện
     setState(() {
-      _hasNewNotification = NotificationManager().unreadCount >
-          0; // Cập nhật trạng thái thông báo
+      _hasNewNotification = NotificationManager().unreadCount > 0;
     });
 
-    // Hiển thị thông tin kèo
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Thông tin kèo đã tạo'),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Tên kèo: ${matchInfo['title']}'),
-              Text('Ngày và giờ: ${matchInfo['date']} ${matchInfo['time']}'),
-              Text('Địa điểm: ${matchInfo['location']}'),
-              Text('Số người chơi: ${matchInfo['maxParticipants']}'),
-              Text('Ghi chú: ${matchInfo['notes']}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Đóng'),
-            ),
-          ],
-        );
-      },
+    // Chuyển sang trang hiển thị thông tin kèo
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MatchDetailsPage(matchInfo: matchInfo),
+      ),
     );
   }
 
@@ -493,7 +474,7 @@ class _PublicMatchFormState extends State<PublicMatchForm> {
         TextField(
           controller: _matchNameController,
           decoration: const InputDecoration(
-            hintText: 'Pickleball Giao hữu với Lê',
+            hintText: 'Pickleball Giao hữu',
             border: OutlineInputBorder(),
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           ),
