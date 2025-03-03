@@ -1,3 +1,5 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 class NotificationManager {
   static final NotificationManager _instance = NotificationManager._internal();
   factory NotificationManager() => _instance;
@@ -19,3 +21,8 @@ class NotificationManager {
     _unreadCount = 0; // Đánh dấu tất cả thông báo là đã đọc
   }
 }
+
+// Đặt notificationManagerProvider ở cấp độ toàn cục
+final notificationManagerProvider = Provider<NotificationManager>((ref) {
+  return NotificationManager();
+});

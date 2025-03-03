@@ -300,14 +300,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           minWidth: 12,
                           minHeight: 12,
                         ),
-                        // child: Text(
-                        //   '${NotificationManager().unreadCount}',
-                        //   style: const TextStyle(
-                        //     color: Colors.white,
-                        //     fontSize: 8,
-                        //   ),
-                        //   textAlign: TextAlign.center,
-                        // ),
+                        child: Text(
+                          '${NotificationManager().unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ],
@@ -319,39 +319,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Stack(
                   children: [
                     Icon(
-                      Icons.notifications_outlined,
+                      Icons.settings,
                       color: _hasNewNotification ? Colors.blue : Colors.grey,
                     ),
-                    if (NotificationManager().unreadCount > 0)
-                      Positioned(
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 12,
-                            minHeight: 12,
-                          ),
-                          // child: Text(
-                          //   '${NotificationManager().unreadCount}',
-                          //   style: const TextStyle(
-                          //     color: Colors.white,
-                          //     fontSize: 8,
-                          //   ),
-                          //   textAlign: TextAlign.center,
-                          // ),
-                        ),
-                      ),
                   ],
                 ),
-                activeIcon: Icon(
-                  Icons.notifications,
-                  color: _hasNewNotification ? Colors.blue : Colors.grey,
-                ),
-                label: 'Thông báo',
+                // activeIcon: Icon(
+                //   Icons.notifications,
+                //   color: _hasNewNotification ? Colors.blue : Colors.grey,
+                // ),
+                label: 'Quản lý',
               ),
             ],
           ),
@@ -498,15 +475,14 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                         const Icon(Icons
                             .notifications_outlined), // Biểu tượng thông báo
                         if (NotificationManager().unreadCount >
-                            0) // Kiểm tra nếu có thông báo chưa đọc
+                            0) // Chỉ hiển thị badge nếu có thông báo chưa đọc
                           Positioned(
-                            right:
-                                0, // Đặt vị trí số thông báo ở góc phải trên cùng
+                            right: 0, // Đặt badge ở góc phải trên cùng
                             child: Container(
-                              padding: const EdgeInsets.all(
-                                  2), // Padding cho số thông báo
+                              padding:
+                                  const EdgeInsets.all(2), // Padding cho badge
                               decoration: BoxDecoration(
-                                color: Colors.red, // Màu nền của số thông báo
+                                color: Colors.red, // Màu nền của badge
                                 borderRadius:
                                     BorderRadius.circular(6), // Bo góc
                               ),
@@ -515,7 +491,7 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                                 minHeight: 12,
                               ),
                               child: Text(
-                                '${NotificationManager().unreadCount}', // Hiển thị số thông báo
+                                '${NotificationManager().unreadCount}', // Hiển thị số lượng thông báo chưa đọc
                                 style: const TextStyle(
                                   color: Colors.white, // Màu chữ
                                   fontSize: 8, // Kích thước chữ
@@ -530,10 +506,8 @@ class _HomeContentState extends ConsumerState<HomeContent> {
                       // Đánh dấu tất cả thông báo là đã đọc khi mở màn hình thông báo
                       NotificationManager().markAllAsRead();
 
-                      // Cập nhật giao diện (nếu cần)
-                      setState(() {
-                        // Cập nhật trạng thái nếu cần
-                      });
+                      // Cập nhật giao diện
+                      setState(() {});
 
                       // Điều hướng đến màn hình thông báo
                       Navigator.push(
